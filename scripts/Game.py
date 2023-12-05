@@ -1,6 +1,13 @@
 import chess
 import Players
 import Display
+import csv
+import sys
+
+path = sys.path[0]
+
+#go up one directory
+path = path[0 : len(path) - 8]
 
 #Class for creating, manipulating, and playing chess games
 class Game ():
@@ -21,6 +28,10 @@ class Game ():
         self.players[chess.WHITE].game = self
         self.players[chess.BLACK].game = self
 
+        self.gameList = []
+        self.startingFEN = startingFEN
+        self.firstTurn = self.board.turn
+
         if display != False:
             self.display = Display.Display(self)
 
@@ -37,6 +48,39 @@ class Game ():
         if self.display != None:
             self.display.displayBoard()
 
+    def saveGame(self):
+
+        self.gameList = [self.startingFEN]
+
+        for i in range(0, len(self.board.move_stack)):
+
+            self.gameList.append(chess.Move.uci(self.board.move_stack[i]))
+
+        with open(path + '\\savedGames\\config.csv') as gameConfig:
+
+            read = csv.reader(gameConfig)
+            
+            #extract game number from row with text (for some reason there are empty rows!)
+            for row in read:
+                if row != []:
+                    gameNum = row[0]
+
+        gameConfig.close()
+
+        with open(path + '\\savedGames\\game_' + str(gameNum) + '.csv', 'w') as gameFile:
+
+            write = csv.writer(gameFile)
+            write.writerow(self.gameList)
+
+        gameFile.close()
+
+        with open(path + '\\savedGames\\config.csv', 'w') as gameConfig:
+
+            write = csv.writer(gameConfig)
+            write.writerow([str(int(gameNum) + 1)])
+
+        gameConfig.close()
+
 game = Game([Players.bot(), Players.bot()], display=False)
 
 while True:
@@ -48,9 +92,13 @@ while True:
         if game.board.is_checkmate() == True:
             print('win')
 
+            game.saveGame()
+
+            game = Game([Players.bot(), Players.bot()], display=False)
+
         else:
             print('draw')
 
-        game = Game([Players.bot(), Players.bot()], display=False)
+            game = Game([Players.bot(), Players.bot()], display=False)
     else:
         game.makeMove()

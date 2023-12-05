@@ -37,7 +37,7 @@ class bot ():
         self.legalMoves = list(board.legal_moves)
 
         alpha = -1 #best evaluation so far
-        bestMove = '' #best move so far (according to the model)
+        bestMove = None #best move so far (according to the model)
 
         #make each move and evaluate each to determine which is the best
         for i in range(0, len(self.legalMoves)):
@@ -56,7 +56,7 @@ class bot ():
 
             #undo move
             self.board.pop()
-
+        
         return bestMove
 
     #evalutate the current state of the board
