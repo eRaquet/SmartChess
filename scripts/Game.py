@@ -1,7 +1,6 @@
 import chess
 import Players
 import Display
-from queue import Queue
 
 #Class for creating, manipulating, and playing chess games
 class Game ():
@@ -22,7 +21,7 @@ class Game ():
         self.players[chess.WHITE].game = self
         self.players[chess.BLACK].game = self
 
-        if display != None:
+        if display != False:
             self.display = Display.Display(self)
 
         else:
@@ -38,11 +37,20 @@ class Game ():
         if self.display != None:
             self.display.displayBoard()
 
-game = Game([Players.Human(), Players.Human()])
+game = Game([Players.bot(), Players.bot()], display=False)
 
 while True:
-    if game.board.is_checkmate() == True:
-        game.display.endDisplay()
-        game = Game([Players.Human(), Players.Human()])
+    if game.board.is_game_over() == True or (game.board.has_insufficient_material(chess.WHITE) and game.board.has_insufficient_material(chess.BLACK)) == True:
+        
+        if game.display != None:
+            game.display.endDisplay()
+        
+        if game.board.is_checkmate() == True:
+            print('win')
+
+        else:
+            print('draw')
+
+        game = Game([Players.bot(), Players.bot()], display=False)
     else:
         game.makeMove()
