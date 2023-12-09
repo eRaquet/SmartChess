@@ -3,6 +3,7 @@ import Players
 import Display
 import csv
 import sys
+import time
 
 path = sys.path[0]
 
@@ -43,8 +44,14 @@ class Game ():
     def makeMove(self):
 
         self.move = self.players[self.board.turn].getMove(self.board, self.display)
-        self.board.push(self.move)
-        self.boardMap = self.board.piece_map()
+
+        #reach into the bot who made the move
+        if self.players[self.board.turn] == Players.Bot:
+            self.boardMap = self.players[self.board.turn].moveBoardMap
+            self.board.push(self.move)
+        else:
+            self.board.push(self.move)
+            self.boardMap = self.board.piece_map()
         if self.display != None:
             self.display.displayBoard()
 
@@ -81,24 +88,16 @@ class Game ():
 
         gameConfig.close()
 
-game = Game([Players.bot(), Players.bot()], display=False)
+game = Game([Players.Bot(chess.BLACK), Players.Human()], display=True)
 
 while True:
     if game.board.is_game_over() == True or (game.board.has_insufficient_material(chess.WHITE) and game.board.has_insufficient_material(chess.BLACK)) == True:
         
-        if game.display != None:
-            game.display.endDisplay()
-        
-        if game.board.is_checkmate() == True:
-            print('win')
+        print(game.players[0].positions[0])
 
-            game.saveGame()
+        break
 
-            game = Game([Players.bot(), Players.bot()], display=False)
-
-        else:
-            print('draw')
-
-            game = Game([Players.bot(), Players.bot()], display=False)
     else:
+        t = time.time()
         game.makeMove()
+        print(time.time() - t)

@@ -1,5 +1,7 @@
 import chess
 import random
+import numpy as np
+import time
 
 #human chess player object
 class Human ():
@@ -25,11 +27,31 @@ class Human ():
 
         return move
     
-class bot ():
+class Bot ():
 
-    def __init__(self):
+    def __init__(self, color):
 
-        pass
+        self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
+
+        self.positions = []
+        self.evaluations = []
+        self.boardGrid = [False] * (12*64 + self.auxParam)
+        
+        #the index location of each piece type (aux, pawn, rook, knight, bishop, queen, king)
+        self.pieceIndex = {
+            chess.PAWN : 0 + self.auxParam,
+            chess.ROOK : 2 * 64 + self.auxParam,
+            chess.KNIGHT : 4 * 64 + self.auxParam,
+            chess.BISHOP : 6 * 64 + self.auxParam,
+            chess.QUEEN : 8 * 64 + self.auxParam,
+            chess.KING : 10 * 64 + self.auxParam
+        }
+
+        #the index offset of each piece color (my piece, other player's piece)
+        self.colorOffset = {
+            color : 0,
+            not color : 64
+        }
 
     def getMove(self, board, display):
 
@@ -54,6 +76,8 @@ class bot ():
                 alpha = evaluation
                 bestMove = move
 
+            self.recordPos(board, alpha)
+
             #undo move
             self.board.pop()
         
@@ -62,3 +86,20 @@ class bot ():
     #evalutate the current state of the board
     def evalutate(self):
         return (random.random() - 0.5) * 2
+    
+    def recordPos(self, board, alpha):
+
+        self.boardGrid = [False] * (12*64 + self.auxParam)
+
+        self.moveBoardMap = board.piece_map()
+
+        for square in self.moveBoardMap:
+
+            #flip the bit at the location of each piece in the boardGrid scheme
+            self.boardGrid[self.pieceIndex[self.moveBoardMap[square].piece_type] + self.colorOffset[self.moveBoardMap[square].color] + square] = True
+
+        #insert auxilary parameters
+        self.boardGrid[0] = (self.positions.count(self.boardGrid) > 2)
+
+        self.positions.append(self.boardGrid)
+        self.evaluations.append(alpha)
