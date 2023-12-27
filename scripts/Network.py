@@ -23,6 +23,7 @@ class Model ():
         self.outputLayer = layers.Dense(dim[len(dim) - 1], 'tanh')(x)
 
         self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
+        self.model.compile(optimizer='adam')
 
     def saveModel(self):
 

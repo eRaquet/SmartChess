@@ -1,6 +1,7 @@
 import chess
 import Players
 import Display
+import Network
 import csv
 import sys
 import time
@@ -25,10 +26,6 @@ class Game ():
         self.board = chess.Board(startingFEN)
         self.boardMap = self.board.piece_map()
 
-        #hand the game object to the players
-        self.players[chess.WHITE].game = self
-        self.players[chess.BLACK].game = self
-
         self.gameList = []
         self.startingFEN = startingFEN
         self.firstTurn = self.board.turn
@@ -43,15 +40,12 @@ class Game ():
     #prompt the players (either human or bot) to make a move, and perform that move
     def makeMove(self):
 
-        self.move = self.players[self.board.turn].getMove(self.board, self.display)
+        self.move = self.players[self.board.turn].getMove(self.board, self.display, self.boardMap)
 
         #reach into the bot who made the move
-        if self.players[self.board.turn] == Players.Bot:
-            self.boardMap = self.players[self.board.turn].moveBoardMap
-            self.board.push(self.move)
-        else:
-            self.board.push(self.move)
-            self.boardMap = self.board.piece_map()
+        self.board.push(self.move)
+        self.boardMap = self.board.piece_map()
+
         if self.display != None:
             self.display.displayBoard()
 
@@ -88,16 +82,21 @@ class Game ():
 
         gameConfig.close()
 
-game = Game([Players.Bot(chess.BLACK), Players.Human()], display=True)
+    def isEnd(self):
+
+        if self.board.is_game_over() == True or (self.board.has_insufficient_material(chess.WHITE) and self.board.has_insufficient_material(chess.BLACK)) == True:
+            return True
+
+network = Network.Model((12 * 64 + 1, 300, 20, 1))
+
+game = Game([Players.Bot(chess.BLACK, network), Players.Bot(chess.WHITE, network)], display=False)
 
 while True:
-    if game.board.is_game_over() == True or (game.board.has_insufficient_material(chess.WHITE) and game.board.has_insufficient_material(chess.BLACK)) == True:
-        
-        print(game.players[0].positions[0])
+    if game.isEnd() != True:
 
-        break
-
-    else:
         t = time.time()
         game.makeMove()
         print(time.time() - t)
+
+    else:
+        break
