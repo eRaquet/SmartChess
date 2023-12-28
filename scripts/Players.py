@@ -34,6 +34,7 @@ class Bot ():
         self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
 
         self.positions = []
+        self.boardStack = np.ndarray((1, 12*64 + self.auxParam), np.bool_)
         
         #the index location of each piece type (aux, pawn, rook, knight, bishop, queen, king)
         self.pieceIndex = {
@@ -103,7 +104,7 @@ class Bot ():
                     if pieceType == chess.PAWN and (abs(toSquare - fromSquare) == 7 or abs(toSquare - fromSquare) == 9):
 
                         #get rid of the captured pawn
-                        movePos[self.pieceIndex[chess.PAWN] + self.colorOffset[not self.color] + toSquare - 8] = True
+                        movePos[self.pieceIndex[chess.PAWN] + self.colorOffset[not self.color] + toSquare - 8] = False
 
                     #add the piece to the bit board in its new position
                     movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] = True

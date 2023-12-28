@@ -42,7 +42,7 @@ class Game ():
 
         self.move = self.players[self.board.turn].getMove(self.board, self.display, self.boardMap)
 
-        #reach into the bot who made the move
+        #make move and update board map
         self.board.push(self.move)
         self.boardMap = self.board.piece_map()
 
@@ -92,9 +92,11 @@ network = Network.Model(offset=0)
 game = Game([Players.Bot(chess.BLACK, network), Players.Bot(chess.WHITE, network)], display=True)
 
 while True:
+    
     if game.isEnd() != True:
 
+        t = time.time()
         game.makeMove()
-
+        print(time.time() - t)
     else:
         break

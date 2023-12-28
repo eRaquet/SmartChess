@@ -1,6 +1,7 @@
 import chess
 import pygame as pg
 import sys
+import time
 
 path = sys.path[0]
 
