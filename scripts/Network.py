@@ -3,6 +3,7 @@ import keras
 from keras import layers
 import sys
 import csv
+import time
 
 path = sys.path[0]
 path = path[0 : len(path) - 8]
@@ -10,20 +11,26 @@ path = path[0 : len(path) - 8]
 class Model ():
 
     #initiate a neural network with a certain shape
-    def __init__(self, dim):
+    def __init__(self, dim=None, offset=None):
+            
+        if dim != None:
 
-        self.inputLayer = keras.Input(dim[0], dtype='bool')
-        x = self.inputLayer
-        
-        #create my hidden layers
-        for i in range(1, len(dim) - 1):
+            self.inputLayer = keras.Input(dim[0], dtype='bool')
+            x = self.inputLayer
+            
+            #create my hidden layers
+            for i in range(1, len(dim) - 1):
 
-            x = layers.Dense(dim[i], 'relu')(x)
+                x = layers.Dense(dim[i], 'relu')(x)
 
-        self.outputLayer = layers.Dense(dim[len(dim) - 1], 'tanh')(x)
+            self.outputLayer = layers.Dense(dim[len(dim) - 1], 'tanh')(x)
 
-        self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
-        self.model.compile(optimizer='adam')
+            self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
+            self.model.compile(optimizer='adam')
+
+        elif offset != None:
+
+            self.loadModel(offset)
 
     def saveModel(self):
 
@@ -60,6 +67,12 @@ class Model ():
 
         netConfig.close()
 
-        index = netNum - indexOffset - 1
+        if netNum >= indexOffset + 1:
+
+            index = netNum - indexOffset - 1
+
+        else:
+
+            index = netNum - 1
 
         self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')

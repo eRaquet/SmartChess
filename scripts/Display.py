@@ -43,6 +43,39 @@ class Display ():
 
         self.displayBoard()
 
+    #display bit board
+    def displayBitBoard(self, bitBoard):
+
+        #create a background color
+        self.surf.fill(pg.Color(100, 75, 25))
+
+        #for every square
+        for square in range(0, 64):
+
+            column = square % 8
+            row = 7 - int((square - square % 8) / 8)
+            lightDark = not bool((column + row) % 2)
+            color = (60 + 160 * lightDark, 35 + 130 * lightDark, 15 + 40 * lightDark)
+
+            pg.draw.rect(self.surf, color, pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
+
+            #for every piece type
+            for piece in range(0, 12):
+                
+                pieceType = piece % 6 #which piece?
+                pieceColor = (piece < 6) #mine or yours?
+
+                #check to see if the piece is on the bit board (and prune this square from our search)
+                if bitBoard[128 * pieceType + 64 - int(pieceColor) * 64 + square] == True:
+
+
+                    self.surf.blit(pieceImages[chess.Piece(pieceType + 1, pieceColor).symbol()], pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
+
+                    #once we find the piece that belongs on that square, be break from this loop
+                    break
+
+        pg.display.update()
+
     #display board
     def displayBoard(self):
 

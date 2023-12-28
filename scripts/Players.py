@@ -37,12 +37,12 @@ class Bot ():
         
         #the index location of each piece type (aux, pawn, rook, knight, bishop, queen, king)
         self.pieceIndex = {
-            chess.PAWN : 0 + self.auxParam,
-            chess.ROOK : 2 * 64 + self.auxParam,
-            chess.KNIGHT : 4 * 64 + self.auxParam,
-            chess.BISHOP : 6 * 64 + self.auxParam,
-            chess.QUEEN : 8 * 64 + self.auxParam,
-            chess.KING : 10 * 64 + self.auxParam
+            chess.PAWN : 0,
+            chess.KNIGHT : 2 * 64,
+            chess.BISHOP : 4 * 64,
+            chess.ROOK : 6 * 64,
+            chess.QUEEN : 8 * 64,
+            chess.KING : 10 * 64
         }
 
         #the index offset of each piece color (my piece, other player's piece)
@@ -88,7 +88,7 @@ class Bot ():
         movePos = self.boardPos #copy the current bit board, and then make changes to it
 
         #remove the fromSquare from the bit board (happens no matter what kind of move it is)
-        movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + fromSquare] == False
+        movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + fromSquare] = False
 
         #if the move is not a capture
         if not (move.to_square in self.currentMap):
@@ -100,25 +100,25 @@ class Bot ():
                 if move.promotion == None:
 
                     #if the move is aun pasaunt (not how you spell it!!)
-                    if pieceType == chess.PAWN and (abs(toSquare - fromSquare) == -7 or abs(toSquare - fromSquare) == -9):
+                    if pieceType == chess.PAWN and (abs(toSquare - fromSquare) == 7 or abs(toSquare - fromSquare) == 9):
 
                         #get rid of the captured pawn
-                        movePos[self.pieceIndex[chess.PAWN] + self.colorOffset[not self.color] + toSquare + 8] == False
+                        movePos[self.pieceIndex[chess.PAWN] + self.colorOffset[not self.color] + toSquare - 8] = True
 
                     #add the piece to the bit board in its new position
-                    movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] == True
+                    movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] = True
 
                 #the move is a promotion
                 else:
 
                     #add the promoted piece to the bit board in its position
-                    movePos[self.pieceIndex[move.promotion] + self.colorOffset[self.color] + toSquare] == True
+                    movePos[self.pieceIndex[move.promotion] + self.colorOffset[self.color] + toSquare] = True
 
             #the move is a casle
             else:
 
                 #delete rook from bit board
-                movePos[self.pieceIndex[chess.ROOK] + self.colorOffset[self.color] + 56 + int((toSquare - fromSquare + 2)/4) * 7] = False #the 56 logic effectivally chooses which file to delete the rook from
+                movePos[self.pieceIndex[chess.ROOK] + self.colorOffset[self.color] + int((toSquare - fromSquare + 2)/4) * 7] = False #the 56 logic effectivally chooses which file to delete the rook from
 
                 #place king two squares offset from origin
                 movePos[self.pieceIndex[chess.KING] + self.colorOffset[self.color] + toSquare] = True
@@ -131,18 +131,18 @@ class Bot ():
             
             #remove the captured piece
             capturedPiece = self.currentMap[move.to_square].piece_type
-            movePos[self.pieceIndex[capturedPiece] + self.colorOffset[not self.color] + toSquare] == False
+            movePos[self.pieceIndex[capturedPiece] + self.colorOffset[not self.color] + toSquare] = False
 
             if move.promotion == None:
 
                 #add the piece to the bit board in its new position
-                movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] == True
+                movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] = True
 
             #the move is a promotion
             else:
 
                 #add the promoted piece to the bit board in its position
-                movePos[self.pieceIndex[move.promotion] + self.colorOffset[self.color] + toSquare] == True
+                movePos[self.pieceIndex[move.promotion] + self.colorOffset[self.color] + toSquare] = True
 
         #check for three-fold repetition
         if np.count_nonzero(np.all(self.boardStack == movePos, axis=1)) > 1:
@@ -166,7 +166,7 @@ class Bot ():
         for square in currentMap:
 
             #add piece to the bit map
-            self.boardPos[self.pieceIndex[currentMap[square].piece_type] + self.colorOffset[currentMap[square].color] + self.squareIndex(square)]
+            self.boardPos[self.pieceIndex[currentMap[square].piece_type] + self.colorOffset[currentMap[square].color] + self.squareIndex(square)] = True
 
     #adjust a square index by color
     def squareIndex(self, square):
