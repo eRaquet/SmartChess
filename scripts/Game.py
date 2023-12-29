@@ -89,14 +89,13 @@ class Game ():
 
 network = Network.Model(offset=0)
 
-game = Game([Players.Bot(chess.BLACK, network), Players.Bot(chess.WHITE, network)], display=True)
+game = Game([Players.Bot(chess.BLACK, network, noise=2.0), Players.Bot(chess.WHITE, network, noise=2.0)], display=True)
 
 while True:
     
     if game.isEnd() != True:
 
-        t = time.time()
         game.makeMove()
-        print(time.time() - t)
+
     else:
         break

@@ -29,7 +29,7 @@ class Human ():
     
 class Bot ():
 
-    def __init__(self, color, network):
+    def __init__(self, color, network, noise=0.0):
 
         self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
 
@@ -55,6 +55,7 @@ class Bot ():
         self.color = color
 
         self.network = network
+        self.noise = noise
 
     def getMove(self, board, display, boardMap):
 
@@ -154,7 +155,7 @@ class Bot ():
     #evalutate a set of board positions
     def evaluate(self, boardPositions):
 
-        eval = self.network.model.predict_on_batch(boardPositions)
+        eval = self.network.model.predict_on_batch(boardPositions).T[0] + (np.random.random(len(boardPositions)) * 2 - 1.0) * self.noise
         index = list(eval).index(eval.max())
         return index
     
