@@ -86,16 +86,6 @@ class Game ():
 
         if self.board.is_game_over() == True or (self.board.has_insufficient_material(chess.WHITE) and self.board.has_insufficient_material(chess.BLACK)) == True:
             return True
-
-network = Network.Model(offset=0)
-
-game = Game([Players.Bot(chess.BLACK, network, noise=2.0), Players.Bot(chess.WHITE, network, noise=2.0)], display=True)
-
-while True:
-    
-    if game.isEnd() != True:
-
-        game.makeMove()
-
-    else:
-        break
+        
+        else:
+            return False

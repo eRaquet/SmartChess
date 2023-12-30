@@ -26,7 +26,7 @@ class Model ():
             self.outputLayer = layers.Dense(dim[len(dim) - 1], 'tanh')(x)
 
             self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
-            self.model.compile(optimizer='adam')
+            self.model.compile(optimizer='adam', loss='mean_squared_error')
 
         elif offset != None:
 
@@ -76,3 +76,7 @@ class Model ():
             index = netNum - 1
 
         self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
+
+model = Model((769, 600, 20, 1))
+
+model.model.save(path + '\\savedNetworks\\model_0.keras')
