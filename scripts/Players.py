@@ -87,7 +87,7 @@ class Bot ():
         fromSquare = self.squareIndex(move.from_square)
         toSquare = self.squareIndex(move.to_square)
         pieceType = self.currentMap[move.from_square].piece_type
-        movePos = self.boardPos #copy the current bit board, and then make changes to it
+        movePos = self.boardPos.copy() #copy the current bit board, and then make changes to it
 
         #remove the fromSquare from the bit board (happens no matter what kind of move it is)
         movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + fromSquare] = False

@@ -68,8 +68,8 @@ class Trainer ():
                 winner = not self.game.board.turn
 
                 #get dataset
-                winnerData = self.game.players[winner].boardStack
-                loserData = self.game.players[winner].boardStack
+                winnerData = self.game.players[winner].positions
+                loserData = self.game.players[winner].positions
                 winnerOutput = np.ones(len(winnerData))
                 loserOutput = -np.ones(len(loserData))
                 inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
@@ -93,7 +93,7 @@ class Trainer ():
 
         self.white = Players.Bot(chess.WHITE, self.currentNetwork, float(not self.rand) * self.noise)
         self.black = Players.Bot(chess.BLACK, self.currentNetwork, float(self.rand) * self.noise)
-        self.game = Game.Game([self.black, self.white], display=False)
+        self.game = Game.Game([self.black, self.white], display=True)
 
         while self.game.isEnd() == False:
 
@@ -107,7 +107,3 @@ class Trainer ():
         else:
 
             return False
-        
-trainer = Trainer(games=1)
-
-trainer.trainSession(10)
