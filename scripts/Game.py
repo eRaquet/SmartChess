@@ -89,3 +89,15 @@ class Game ():
         
         else:
             return False
+
+'''        
+game = Game([Players.Bot(chess.BLACK, Network.Model(offset=0)), Players.Human()])
+
+while True:
+    if game.isEnd() == False:
+
+        game.makeMove()
+
+    else:
+        break
+'''

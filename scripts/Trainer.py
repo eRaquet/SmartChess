@@ -7,6 +7,12 @@ import chess
 import keras
 import random
 import numpy as np
+import sys
+
+path = sys.path[0]
+
+#go up one directory
+path = path[0 : len(path) - 8]
 
 #class for training the model
 class Trainer ():
@@ -20,26 +26,31 @@ class Trainer ():
 
         self.currentNetwork = Network.Model(offset=networkOffset)
 
+        self.testPos = np.load(path + '\\testPositions\\testPositions.npy')
+        self.testEval = np.load(path + '\\testPositions\\testEvaluations.npy')
+
     #train an entire session
     def trainSession(self, epochs):
 
         saveCount = 0
         epochCount = 0
 
-        self.wins = 0
-        self.games = 0
-
         #train each epoch of games
         while epochCount < epochs:
+
+            self.wins = 0
+            self.games = 0
             
             self.trainEpoch()
+
+            self.validate()
 
             saveCount += 1
             if saveCount == self.saveFraction:
                 self.currentNetwork.saveModel()
                 saveCount = 0
 
-            print(self.wins / self.games)
+            print('Win ratio: ' + str(self.wins / self.games))
 
             epochCount += 1
 
@@ -57,7 +68,6 @@ class Trainer ():
         while winCount != self.gamesPerEpoch:
 
             outcome = self.playGame()
-            print(outcome)
 
             self.games += 1
 
@@ -75,13 +85,13 @@ class Trainer ():
                 inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
                 outputData = np.concatenate((outputData, winnerOutput, loserOutput), axis=0)
 
-                self.noise = min(1.0, self.noise - (1 - self.winRatio) * 0.01)
+                self.noise = min(0.4, self.noise - (1 - self.winRatio) * 0.001)
                 self.game.players[chess.WHITE].noise = float(not self.rand) * self.noise
                 self.game.players[chess.BLACK].noise = float(self.rand) * self.noise
 
             else:
 
-                self.noise = min(1.0, self.noise + self.winRatio * 0.01)
+                self.noise = min(0.4, self.noise + self.winRatio * 0.001)
 
         #train on the data
         self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=3)
@@ -93,7 +103,7 @@ class Trainer ():
 
         self.white = Players.Bot(chess.WHITE, self.currentNetwork, float(not self.rand) * self.noise)
         self.black = Players.Bot(chess.BLACK, self.currentNetwork, float(self.rand) * self.noise)
-        self.game = Game.Game([self.black, self.white], display=True)
+        self.game = Game.Game([self.black, self.white], display=False)
 
         while self.game.isEnd() == False:
 
@@ -107,3 +117,12 @@ class Trainer ():
         else:
 
             return False
+
+    #test the network on some archived positions (not for training...just a way to reality check)
+    def validate(self):
+        
+        print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
+
+trainer = Trainer(games=80, startNoise=0.09)
+
+trainer.trainSession(8)

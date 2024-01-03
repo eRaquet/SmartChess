@@ -70,7 +70,7 @@ testDataEval = np.zeros(testDatasetCount)
 for i in range(0, testDatasetCount):
     board = chess.Board(chooseData[i][0])
     testDataPos[i] = getBitBoard(board)
-    testDataEval[i] = np.tanh(int(chooseData[i][1]) / 400) * int(board.turn)
+    testDataEval[i] = np.tanh(int(chooseData[i][1]) / 400) * int(not board.turn)
     print(testDataEval[i])
 
 np.save(path + '\\testPositions.npy', testDataPos)
