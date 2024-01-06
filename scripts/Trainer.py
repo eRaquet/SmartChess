@@ -94,15 +94,15 @@ class Trainer ():
                 self.noise = min(0.4, self.noise + self.winRatio * 0.001)
 
         #train on the data
-        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=3)
+        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=2)
 
     #play a game to its end, and return the outcome
     def playGame(self):
 
         self.rand = bool(round(random.random()))
 
-        self.white = Players.Bot(chess.WHITE, self.currentNetwork, float(not self.rand) * self.noise)
-        self.black = Players.Bot(chess.BLACK, self.currentNetwork, float(self.rand) * self.noise)
+        self.white = Players.Bot(chess.WHITE, self.currentNetwork, (1 - 0.8 * float(not self.rand)) * self.noise)
+        self.black = Players.Bot(chess.BLACK, self.currentNetwork, (1 - 0.8 * float(self.rand)) * self.noise)
         self.game = Game.Game([self.black, self.white], display=False)
 
         while self.game.isEnd() == False:
@@ -125,4 +125,4 @@ class Trainer ():
 
 trainer = Trainer(games=80, startNoise=0.09)
 
-trainer.trainSession(8)
+trainer.trainSession(10)
