@@ -31,7 +31,7 @@ class Game ():
         self.firstTurn = self.board.turn
 
         if display != False:
-            self.display = Display.Display(self)
+            self.display = Display.Display()
 
         else:
             self.display = None
@@ -47,7 +47,7 @@ class Game ():
         self.boardMap = self.board.piece_map()
 
         if self.display != None:
-            self.display.displayBoard()
+            self.display.displayBoard(self.board, boardMap=self.boardMap)
 
     def saveGame(self):
 
@@ -90,7 +90,7 @@ class Game ():
         else:
             return False
 
-'''
+
 game = Game([Players.Bot(chess.BLACK, Network.Model(offset=0)), Players.Human()])
 
 while True:
@@ -100,4 +100,5 @@ while True:
 
     else:
         break
-'''
+
+game.saveGame()

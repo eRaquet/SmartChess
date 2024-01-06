@@ -19,7 +19,7 @@ class Human ():
         #wait until the player enters a valid move
         while move == None:
             
-            display.getHumanInput()
+            display.getHumanInput(board, boardMap=boardMap)
 
             if display.inputMove != None:
                 move = display.inputMove

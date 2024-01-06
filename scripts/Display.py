@@ -2,6 +2,7 @@ import chess
 import pygame as pg
 import sys
 import time
+import csv
 
 path = sys.path[0]
 
@@ -25,16 +26,12 @@ pieceImages = {
 
 class Display ():
 
-    def __init__(self, game):
-
-        self.game = game
+    def __init__(self):
 
         pg.init()
 
         self.inputMove = None
         self.end = False
-
-        self.players = (1, 1) #black and white, respectively, are being played by the display--1 is human, 0 is other
 
         #set up graphics
         self.surf = pg.display.set_mode((520, 520))
@@ -42,7 +39,7 @@ class Display ():
         self.selectedSquare = None
         self.highlightMask = []
 
-        self.displayBoard()
+        self.displayBoard(chess.Board())
 
     #display bit board
     def displayBitBoard(self, bitBoard):
@@ -78,7 +75,10 @@ class Display ():
         pg.display.update()
 
     #display board
-    def displayBoard(self):
+    def displayBoard(self, board, boardMap=None):
+
+        if boardMap == None:
+            boardMap = board.piece_map()
 
         self.highlightMask = []
 
@@ -95,7 +95,7 @@ class Display ():
 
             #highlight if the current square is a possible move for the selected piece
             try:
-                highlight = self.game.board.find_move(self.selectedSquare, square) in self.game.board.legal_moves
+                highlight = board.find_move(self.selectedSquare, square) in board.legal_moves
                 self.highlightMask.append(square)
             except Exception:
                 highlight = False
@@ -103,7 +103,7 @@ class Display ():
             selected = (square == self.selectedSquare)
 
             #if our king is on this square and check is placed on the board
-            if square in self.game.boardMap and self.game.boardMap[square].color == self.game.board.turn and self.game.boardMap[square].piece_type == chess.KING and self.game.board.is_check() == True:
+            if square in boardMap and boardMap[square].color == board.turn and boardMap[square].piece_type == chess.KING and board.is_check() == True:
                 color = (100, 0, 0)
 
             elif highlight:
@@ -118,7 +118,7 @@ class Display ():
             #draw the square color
             pg.draw.rect(self.surf, color, pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
 
-            piece = self.game.boardMap.get(i)
+            piece = boardMap.get(i)
 
             #if there is a piece at this square, render it onto the board
             if piece != None:
@@ -129,7 +129,10 @@ class Display ():
         pg.display.update()
 
     #check for human input
-    def getHumanInput(self):
+    def getHumanInput(self, board, boardMap=None):
+
+        if boardMap == None:
+            boardMap = board.piece_map()
             
         #get events
         events = pg.event.get()
@@ -154,33 +157,74 @@ class Display ():
                     #...no square selected->select square
                     if self.selectedSquare == None:
 
-                        if square in self.game.boardMap:
-                            if self.game.boardMap[square].color == self.game.board.turn:
+                        if square in boardMap:
+                            if boardMap[square].color == board.turn:
                                 self.selectedSquare = square
-                                self.displayBoard()
+                                self.displayBoard(board, boardMap=boardMap)
                     
                     #...square is selected
                     else:
 
-                        if square in self.game.boardMap:
-                            if self.game.boardMap[square].color == self.game.board.turn and square != self.selectedSquare:
+                        if square in boardMap:
+                            if boardMap[square].color == board.turn and square != self.selectedSquare:
                                 self.selectedSquare = square
-                                self.displayBoard()
+                                self.displayBoard(board, boardMap=boardMap)
                             
                         if square in self.highlightMask:
 
                             #if the move is a pawn promotion
-                            if self.game.boardMap[self.selectedSquare].piece_type == chess.PAWN and (chess.square_rank(square) == 7 or chess.square_rank(square) == 0):
+                            if boardMap[self.selectedSquare].piece_type == chess.PAWN and (chess.square_rank(square) == 7 or chess.square_rank(square) == 0):
                                 self.inputMove = chess.Move(self.selectedSquare, square, chess.QUEEN)
                             else:
                                 self.inputMove = chess.Move(self.selectedSquare, square)
 
                             self.selectedSquare = None
-                            self.displayBoard()
+                            self.displayBoard(board, boardMap=boardMap)
 
                         else:
                             self.selectedSquare = None
-                            self.displayBoard()
+                            self.displayBoard(board, boardMap=boardMap)
+    
+    #play through a saved game
+    def replay(self, gameNum):
+
+        with open(path + '\\savedGames\\game_' + str(gameNum) + '.csv', 'r') as gameConfig:
+
+            read = csv.reader(gameConfig)
+            
+            #extract game number from row with text (for some reason there are empty rows!)
+            for row in read:
+                if row != []:
+                    boardFen = row[0]
+                    moves = row[1:]
+
+        gameConfig.close()
+
+        board = chess.Board(fen=boardFen)
+        moveCount = 0
+
+        #play through the moves at the command of the users mouse pushes
+        while moveCount != len(moves):
+
+            for event in pg.event.get():
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+
+                    board.push(chess.Move.from_uci(moves[moveCount]))
+                    moveCount += 1
+
+                    self.displayBoard(board)
+
+        #exit once the user is finished looking at the last position
+        while moveCount != 0:
+
+            for event in pg.event.get():
+
+                if event.type == pg.MOUSEBUTTONDOWN:
+
+                    moveCount = 0
+        
+        self.endDisplay()
     
     def endDisplay(self):
         pg.quit()

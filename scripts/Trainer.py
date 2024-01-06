@@ -48,6 +48,7 @@ class Trainer ():
             saveCount += 1
             if saveCount == self.saveFraction:
                 self.currentNetwork.saveModel()
+                self.game.saveGame()
                 saveCount = 0
 
             print('Win ratio: ' + str(self.wins / self.games))
@@ -56,6 +57,7 @@ class Trainer ():
 
         if (saveCount != 0):
             self.currentNetwork.saveModel()
+            self.game.saveGame()
     
     #train one epoch of games
     def trainEpoch(self):
