@@ -96,7 +96,7 @@ class Trainer ():
                 self.noise = min(0.4, self.noise + self.winRatio * 0.001)
 
         #train on the data
-        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=2)
+        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=100)
 
     #play a game to its end, and return the outcome
     def playGame(self):
@@ -125,6 +125,6 @@ class Trainer ():
         
         print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
 
-trainer = Trainer(games=80, startNoise=0.09)
+trainer = Trainer(games=1, startNoise=0.09)
 
-trainer.trainSession(10)
+trainer.trainSession(1)

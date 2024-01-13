@@ -228,3 +228,6 @@ class Display ():
     
     def endDisplay(self):
         pg.quit()
+
+#play = Display()
+#play.replay(13)

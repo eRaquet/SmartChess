@@ -21,12 +21,13 @@ class Model ():
             #create my hidden layers
             for i in range(1, len(dim) - 1):
 
-                x = layers.Dense(dim[i], 'relu')(x)
+                x = layers.Dense(dim[i], 'gelu')(x)
 
             self.outputLayer = layers.Dense(dim[len(dim) - 1], 'tanh')(x)
 
             self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
-            self.model.compile(optimizer='adam', loss='mean_squared_error', run_eagerly=True)
+            self.opt = keras.optimizers.Adam()
+            self.model.compile(optimizer=self.opt, loss='mean_squared_error', run_eagerly=True)
 
         elif offset != None:
 
@@ -77,5 +78,5 @@ class Model ():
 
         self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
 
-#net = Model((769, 800, 20, 1))
+#net = Model((769, 1000, 40, 1))
 #net.model.save(path + '\\savedNetworks\\model_0.keras')
