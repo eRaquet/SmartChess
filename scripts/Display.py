@@ -230,4 +230,4 @@ class Display ():
         pg.quit()
 
 #play = Display()
-#play.replay(13)
+#play.replay(1)

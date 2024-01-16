@@ -80,23 +80,21 @@ class Trainer ():
                 winner = not self.game.board.turn
 
                 #get dataset
-                winnerData = self.game.players[winner].positions
-                loserData = self.game.players[winner].positions
+                winnerData = np.array([self.game.players[winner].positions[0]])
+                loserData = np.array([self.game.players[not winner].positions[0]])
                 winnerOutput = np.ones(len(winnerData))
                 loserOutput = -np.ones(len(loserData))
                 inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
                 outputData = np.concatenate((outputData, winnerOutput, loserOutput), axis=0)
 
-                self.noise = min(0.4, self.noise - (1 - self.winRatio) * 0.001)
-                self.game.players[chess.WHITE].noise = float(not self.rand) * self.noise
-                self.game.players[chess.BLACK].noise = float(self.rand) * self.noise
+                self.noise = min(0.2, self.noise - (1 - self.winRatio) * 0.001)
 
             else:
 
-                self.noise = min(0.4, self.noise + self.winRatio * 0.001)
+                self.noise = min(0.2, self.noise + self.winRatio * 0.001)
 
         #train on the data
-        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=100)
+        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=600, verbose=1)
 
     #play a game to its end, and return the outcome
     def playGame(self):

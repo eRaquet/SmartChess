@@ -34,6 +34,7 @@ class Bot ():
         self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
 
         self.positions = []
+        self.evaluations = []
         self.boardStack = np.ndarray((1, 12*64 + self.auxParam), np.bool_)
         
         #the index location of each piece type (aux, pawn, rook, knight, bishop, queen, king)
@@ -79,6 +80,7 @@ class Bot ():
 
         bestMove = self.legalMoves[index]
         self.positions.append(self.boardStack[index])
+        self.evaluations.append(self.bestEval)
 
         return bestMove
     
@@ -156,7 +158,12 @@ class Bot ():
     def evaluate(self, boardPositions):
 
         eval = self.network.model.predict_on_batch(boardPositions).T[0] + (np.random.random(len(boardPositions)) * 2 - 1.0) * self.noise
-        index = list(eval).index(eval.max())
+        
+        #pick best evaluation and make it public for saving purposes
+        self.bestEval = eval.max()
+
+        #get index of best evaluation
+        index = list(eval).index(self.bestEval)
         return index
     
     #create a bit board from the current board position

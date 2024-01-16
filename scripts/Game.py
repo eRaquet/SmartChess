@@ -91,12 +91,13 @@ class Game ():
             return False
 
 '''
-game = Game([Players.Bot(chess.BLACK, Network.Model(offset=0)), Players.Human()])
+game = Game([Players.Bot(chess.BLACK, Network.Model(offset=0)), Players.Bot(chess.WHITE, Network.Model(offset=0))])
 
 while True:
     if game.isEnd() == False:
 
         game.makeMove()
+        time.sleep(0.3)
 
     else:
         break
