@@ -1,7 +1,7 @@
-import Game
-import Network
-import Players
-import Display
+import lib.Game as Game
+import lib.Network as Network
+import lib.Players as Players
+import lib.Display as Display
 import time
 import chess
 import keras
@@ -80,8 +80,8 @@ class Trainer ():
                 winner = not self.game.board.turn
 
                 #get dataset
-                winnerData = np.array([self.game.players[winner].positions[0]])
-                loserData = np.array([self.game.players[not winner].positions[0]])
+                winnerData = self.game.players[winner].positions
+                loserData = self.game.players[not winner].positions
                 winnerOutput = np.ones(len(winnerData))
                 loserOutput = -np.ones(len(loserData))
                 inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
@@ -94,7 +94,7 @@ class Trainer ():
                 self.noise = min(0.2, self.noise + self.winRatio * 0.001)
 
         #train on the data
-        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=600, verbose=1)
+        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=40, verbose=1)
 
     #play a game to its end, and return the outcome
     def playGame(self):
@@ -123,6 +123,6 @@ class Trainer ():
         
         print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
 
-trainer = Trainer(games=1, startNoise=0.09)
+trainer = Trainer(games=10, startNoise=0.09)
 
-trainer.trainSession(1)
+trainer.trainSession(10)

@@ -1,7 +1,7 @@
 import chess
-import Players
-import Display
-import Network
+import lib.Players as Players
+import lib.Display as Display
+import lib.Network as Network
 import csv
 import sys
 import time
@@ -89,16 +89,3 @@ class Game ():
         
         else:
             return False
-
-'''
-game = Game([Players.Bot(chess.BLACK, Network.Model(offset=0)), Players.Bot(chess.WHITE, Network.Model(offset=0))])
-
-while True:
-    if game.isEnd() == False:
-
-        game.makeMove()
-        time.sleep(0.3)
-
-    else:
-        break
-'''
