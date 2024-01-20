@@ -77,6 +77,3 @@ class Model ():
             index = netNum - 1
 
         self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
-
-#net = Model((769, 1000, 40, 1))
-#net.model.save(path + '\\savedNetworks\\model_0.keras')
