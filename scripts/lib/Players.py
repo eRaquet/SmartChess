@@ -65,25 +65,41 @@ class Bot ():
         self.legalMoves = list(board.legal_moves)
         self.boardStack = np.ndarray((len(self.legalMoves), 12*64 + self.auxParam), np.bool_)
 
-        bestMove = None #best move so far (according to the model)
+        #check if this move should be a random move
+        rand = (random.random() < self.noise)
 
-        #make each move and add their bit boards to the move stack
-        for i in range(0, len(self.legalMoves)):
+        #if move is not random
+        if not rand:
 
-            #generate a bit board move
-            move = self.legalMoves[i]
-            bitBoard = self.bitBoardFromMove(move)
-            self.boardStack[i] = bitBoard
-        
-        #once all moves have been implimented, evaluate them with the current network and get the index of the best move
-        index = self.evaluate(self.boardStack)
+            bestMove = None #best move so far (according to the model)
 
-        bestMove = self.legalMoves[index]
-        self.positions.append(self.boardStack[index])
-        self.evaluations.append(self.bestEval)
+            #make each move and add their bit boards to the move stack
+            for i in range(0, len(self.legalMoves)):
 
-        return bestMove
+                #generate a bit board move
+                move = self.legalMoves[i]
+                bitBoard = self.bitBoardFromMove(move)
+                self.boardStack[i] = bitBoard
+            
+            #once all moves have been implimented, evaluate them with the current network and get the index of the best move
+            index = self.evaluate(self.boardStack)
+
+            bestMove = self.legalMoves[index]
+            self.positions.append(self.boardStack[index])
+
+            return bestMove
     
+        #move is random
+        else:
+
+            #pick random move
+            bestMove = random.choice(self.legalMoves)
+            index = self.legalMoves.index(bestMove)
+
+            self.positions.append(self.bitBoardFromMove(bestMove))
+
+            return bestMove
+
     #get an updated bit board logically with information about the move (meant to speed up computation)
     def bitBoardFromMove(self, move):
         fromSquare = self.squareIndex(move.from_square)
@@ -157,13 +173,13 @@ class Bot ():
     #evalutate a set of board positions
     def evaluate(self, boardPositions):
 
-        eval = self.network.model.predict_on_batch(boardPositions).T[0] + (np.random.random(len(boardPositions)) * 2 - 1.0) * self.noise
+        eval = self.network.model.predict_on_batch(boardPositions).T[0]
         
-        #pick best evaluation and make it public for saving purposes
-        self.bestEval = eval.max()
+        #pick best evaluation
+        bestEval = eval.max()
 
         #get index of best evaluation
-        index = list(eval).index(self.bestEval)
+        index = list(eval).index(bestEval)
         return index
     
     #create a bit board from the current board position
