@@ -17,12 +17,13 @@ path = path[0 : len(path) - 8]
 #class for training the model
 class Trainer ():
 
-    def __init__(self, games=10, winRatio=0.8, save=4, networkOffset=0, startNoise=0.2):
+    def __init__(self, games=10, winRatio=0.8, save=4, networkOffset=0, startNoise=0.2, correctionValue=0.02):
 
         self.gamesPerEpoch = games
         self.winRatio = winRatio
         self.saveFraction = save
         self.noise = startNoise
+        self.correction = correctionValue
 
         self.currentNetwork = Network.Model(offset=networkOffset)
 
@@ -82,8 +83,10 @@ class Trainer ():
                 #get dataset
                 winnerData = self.game.players[winner].positions
                 loserData = self.game.players[not winner].positions
-                winnerOutput = np.ones(len(winnerData))
-                loserOutput = -np.ones(len(loserData))
+
+                #apply correction to the model
+                winnerOutput = np.clip(self.game.players[winner].evaluations + self.correction * np.ones(len(winnerData)), -1.0, 1.0)
+                loserOutput = np.clip(self.game.players[not winner].evaluations - self.correction * np.ones(len(loserData)), -1.0, 1.0)
                 inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
                 outputData = np.concatenate((outputData, winnerOutput, loserOutput), axis=0)
 
@@ -101,8 +104,8 @@ class Trainer ():
 
         self.rand = bool(round(random.random()))
 
-        self.white = Players.Bot(chess.WHITE, self.currentNetwork, (1 - 0.8 * float(not self.rand)) * self.noise)
-        self.black = Players.Bot(chess.BLACK, self.currentNetwork, (1 - 0.8 * float(self.rand)) * self.noise)
+        self.white = Players.Bot(chess.WHITE, self.currentNetwork, (1 - 0.9 * float(not self.rand)) * self.noise)
+        self.black = Players.Bot(chess.BLACK, self.currentNetwork, (1 - 0.9 * float(self.rand)) * self.noise)
         self.game = Game.Game([self.black, self.white], display=False)
 
         while self.game.isEnd() == False:
@@ -122,7 +125,3 @@ class Trainer ():
     def validate(self):
         
         print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
-
-trainer = Trainer(games=10, startNoise=0.09)
-
-trainer.trainSession(10)

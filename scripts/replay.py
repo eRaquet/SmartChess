@@ -1,6 +1,6 @@
 #Test script: replay a training game
 
-import scripts.lib.Display as Display
+import lib.Display as Display
 
 while True:
 
