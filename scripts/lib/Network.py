@@ -26,7 +26,7 @@ class Model ():
             self.outputLayer = layers.Dense(dim[len(dim) - 1], 'tanh')(x)
 
             self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
-            self.opt = keras.optimizers.Adam(learning_rate = 0.00005)
+            self.opt = keras.optimizers.Adam(learning_rate = 0.00001)
             self.model.compile(optimizer=self.opt, loss='mean_squared_error', run_eagerly=True)
 
         elif offset != None:

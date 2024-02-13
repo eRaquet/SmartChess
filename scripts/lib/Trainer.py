@@ -17,13 +17,12 @@ path = path[0 : len(path) - 8]
 #class for training the model
 class Trainer ():
 
-    def __init__(self, games=10, winRatio=0.8, save=4, networkOffset=0, startNoise=0.2, correctionValue=0.06):
+    def __init__(self, games=10, winRatio=0.8, save=4, networkOffset=0, startNoise=0.2):
 
         self.gamesPerEpoch = games
         self.winRatio = winRatio
         self.saveFraction = save
         self.noise = startNoise
-        self.correction = correctionValue
 
         self.currentNetwork = Network.Model(offset=networkOffset)
 
@@ -87,8 +86,8 @@ class Trainer ():
                 loserEvaluations = self.currentNetwork.model.predict_on_batch(np.array(self.game.players[not winner].positions)).T[0]
 
                 #apply correction to the model
-                winnerOutput = np.clip(winnerEvaluations + self.correction * np.ones(len(winnerData)), -1.0, 1.0)
-                loserOutput = np.clip(loserEvaluations - self.correction * np.ones(len(loserData)), -1.0, 1.0)
+                winnerOutput = np.clip(winnerEvaluations + np.ones(len(winnerData)) / len(winnerData), -1.0, 1.0)
+                loserOutput = np.clip(loserEvaluations - np.ones(len(loserData)) / len(loserData), -1.0, 1.0)
                 inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
                 outputData = np.concatenate((outputData, winnerOutput, loserOutput), axis=0)
 

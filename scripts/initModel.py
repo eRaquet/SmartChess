@@ -7,5 +7,6 @@ import sys
 path = sys.path[0]
 path = path[0 : len(path) - 8]
 
-model = Network.Model((769, 1000, 40, 1))
-model.model.save(path + '\\savedNetworks\\model_0.keras')
+for i in range(0, 0):
+    model = Network.Model((769, 1000, 40, 1))
+    model.model.save(path + '\\savedNetworks\\model_' + str(i) + '9.keras')
