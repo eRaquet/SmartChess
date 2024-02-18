@@ -118,3 +118,19 @@ class Trainer ():
     def validate(self):
         
         print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
+
+#get a distibution of opponents given a number of games to play (play better bots more)
+def getGameDist(gameNum):
+    opponentNum = 5
+    gameList = np.zeros(opponentNum)
+    for i in range(0, opponentNum):
+        gameList[i] = gameDist(i, opponentNum)
+    gameList = (gameList * gameNum).astype(int)
+    print(gameList)
+
+#game distibution function --> used in getGameDist
+def gameDist(index, n):
+
+    #adjust index to function to a midpoint rectagular approximation
+    index += 0.5
+    return (-2 / n**2) * index + (2 / n)
