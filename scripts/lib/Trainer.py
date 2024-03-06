@@ -15,14 +15,18 @@ path = sys.path[0]
 path = path[0 : len(path) - 8]
 
 #class for training the model
+
+#the training breakdown (with apporpriate iterators at each stage):
+
+#Trainer -- trainSession() -> trainEpoch() -> playBot() -> playGame()
+
 class Trainer ():
 
-    def __init__(self, games=10, winRatio=0.8, save=4, networkOffset=0, startNoise=0.2):
+    def __init__(self, winRatio=0.8, networkOffset=0, startNoise=0.2, opponentNum=9):
 
-        self.gamesPerEpoch = games
         self.winRatio = winRatio
-        self.saveFraction = save
         self.noise = startNoise
+        self.opponentNum = opponentNum
 
         self.currentNetwork = Network.Model(offset=networkOffset)
 
@@ -30,51 +34,68 @@ class Trainer ():
         self.testEval = np.load(path + '\\testPositions\\testEvaluations.npy')
 
     #train an entire session
-    def trainSession(self, epochs):
+    def trainSession(self, epochs, gameNum):
 
-        saveCount = 0
         epochCount = 0
+        self.gamesPerEpoch = gameNum
 
         #train each epoch of games
         while epochCount < epochs:
 
-            self.wins = 0
+            #count how many games we played that resulted in a victory
             self.games = 0
             
             self.trainEpoch()
 
-            self.validate()
-
-            saveCount += 1
-            if saveCount == self.saveFraction:
-                self.currentNetwork.saveModel()
-                self.game.saveGame()
-                saveCount = 0
-
-            print('Win ratio: ' + str(self.wins / self.games))
+            #self.validate() FIXME make some sort of monitering system
 
             epochCount += 1
 
-        if (saveCount != 0):
-            self.currentNetwork.saveModel()
-            self.game.saveGame()
-    
-    #train one epoch of games
+    #train one epoch of games (and create one new model)
     def trainEpoch(self):
 
-        inputData = np.ndarray((0, 769), np.bool_)
-        outputData = np.ndarray(0)
+        self.inputTrainData = np.ndarray((0, 769), np.bool_)
+        self.outputTrainData = np.ndarray(0)
+
+        #define an array that keeps track of how many wins the current model has had against other models
+        #this is to be compared with the array of scheduled games
+        self.winsPerBot = np.zeros(self.opponentNum, int)
+
+        #the list of bots that have already been loaded into the session
+        #indexed by offset value (loadedBots[n] => model_"(maxIndex - n)".keras)
+        self.loadedBots = []
+
+        #generate the scheduled games
+        self.gameSchedule = getGameDist(self.gamesPerEpoch, self.opponentNum)
+
+        self.botOffset = 0
+
+        while self.botOffset != self.opponentNum:
+
+            #load opponent bot (first one will be self)
+            self.loadedBots.append(Network.Model.loadModel(self.botOffset))
+
+            #play all the games against one bot
+            self.playBot(self.gameSchedule[self.botOffset])
+
+            self.botOffset += 1
+
+        #train on the data
+        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=7, verbose=0)
+
+    #play all the games against one specific bot and add the data to the training data
+    def playBot(self, gameNum):
 
         winCount = 0
 
-        while winCount != self.gamesPerEpoch:
+        while winCount != gameNum:
 
+            #play a game against the current bot (using implicit pass of botOffset from trainEpoch())
             outcome = self.playGame()
 
             self.games += 1
 
             if outcome:
-                self.wins += 1
                 winCount += 1
                 winner = not self.game.board.turn
 
@@ -82,23 +103,47 @@ class Trainer ():
                 winnerData = self.game.players[winner].positions
                 loserData = self.game.players[not winner].positions
 
+                #I can't use a fixed offset (-1 or 1) for my evaluation, because worse positions will receive higher gradients.
+                #I can't use logged evaluations, because they may conform my network to previous versions.
+
+                #The best strategy will be to evaluate all the positions with the current network, and accept the error between
+                #different models choices.
+
                 winnerEvaluations = self.currentNetwork.model.predict_on_batch(np.array(self.game.players[winner].positions)).T[0]
                 loserEvaluations = self.currentNetwork.model.predict_on_batch(np.array(self.game.players[not winner].positions)).T[0]
 
                 #apply correction to the model
-                winnerOutput = np.clip(winnerEvaluations + np.ones(len(winnerData)) / len(winnerData), -1.0, 1.0)
-                loserOutput = np.clip(loserEvaluations - np.ones(len(loserData)) / len(loserData), -1.0, 1.0)
-                inputData = np.concatenate((inputData, winnerData, loserData), axis=0)
-                outputData = np.concatenate((outputData, winnerOutput, loserOutput), axis=0)
+                winnerOutput = np.clip(winnerEvaluations + rewardVal(len(winnerData)), -1.0, 1.0)
+                loserOutput = np.clip(loserEvaluations - rewardVal(len(loserData)), -1.0, 1.0)
+                self.inputTrainData = np.concatenate((self.inputTrainData, winnerData, loserData), axis=0)
+                self.outputTrainData = np.concatenate((self.outputTrainData, winnerOutput, loserOutput), axis=0)
 
-        #train on the data
-        self.currentNetwork.model.fit(x=inputData, y=outputData, batch_size=len(outputData), epochs=7, verbose=1)
+                #check if the bot that one was the main bot
+                if (self.rand == winner):
+                    #add one to the appropriate tally
+                    self.winsPerBot[self.botOffset] += 1
+
+        #record how many times the mainBot won over the contender
+        #(for recording purposes)
+        
 
     #play a game to its end, and return the outcome
     def playGame(self):
 
-        self.white = Players.Bot(chess.WHITE, self.currentNetwork, self.noise)
-        self.black = Players.Bot(chess.BLACK, self.currentNetwork, self.noise)
+        #define a random value to determine which bot gets which color
+        self.rand = bool(round(random.random()))
+
+        #main bot gets white
+        if self.rand:
+            whiteBot = self.currentNetwork
+            blackBot = self.loadedBots[self.botOffset]
+        #main bot gets black
+        else:
+            whiteBot = self.loadedBots[self.botOffset]
+            blackBot = self.currentNetwork
+
+        self.white = Players.Bot(chess.WHITE, whiteBot, self.noise)
+        self.black = Players.Bot(chess.BLACK, blackBot, self.noise)
         self.game = Game.Game([self.black, self.white], display=False)
 
         while self.game.isEnd() == False:
@@ -120,8 +165,7 @@ class Trainer ():
         print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
 
 #get a distibution of opponents given a number of games to play (play better bots more)
-def getGameDist(gameNum):
-    opponentNum = 5
+def getGameDist(gameNum, opponentNum):
     gameList = np.zeros(opponentNum)
     for i in range(0, opponentNum):
         gameList[i] = gameDist(i, opponentNum)
@@ -134,3 +178,10 @@ def gameDist(index, n):
     #adjust index to function to a midpoint rectagular approximation
     index += 0.5
     return (-2 / n**2) * index + (2 / n)
+
+#reward function
+def rewardVal(length):
+
+    #a constant term and a dependant term
+    value = 0.2 - (0.2 / 60) * length
+    return max(value, 0.02)

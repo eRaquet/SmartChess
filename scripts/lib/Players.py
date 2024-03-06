@@ -176,10 +176,10 @@ class Bot ():
         eval = self.network.model.predict_on_batch(boardPositions).T[0]
         
         #pick best evaluation
-        bestEval = eval.max()
+        self.bestEval = eval.max()
 
         #get index of best evaluation
-        index = list(eval).index(bestEval)
+        index = list(eval).index(self.bestEval)
         return index
     
     #create a bit board from the current board position
