@@ -22,9 +22,8 @@ path = path[0 : len(path) - 8]
 
 class Trainer ():
 
-    def __init__(self, winRatio=0.8, networkOffset=0, startNoise=0.2, opponentNum=9):
+    def __init__(self, networkOffset=0, startNoise=0.1, opponentNum=9):
 
-        self.winRatio = winRatio
         self.noise = startNoise
         self.opponentNum = opponentNum
 
@@ -73,15 +72,22 @@ class Trainer ():
         while self.botOffset != self.opponentNum:
 
             #load opponent bot (first one will be self)
-            self.loadedBots.append(Network.Model.loadModel(self.botOffset))
+            self.loadedBots.append(Network.Model(offset=self.botOffset))
 
             #play all the games against one bot
             self.playBot(self.gameSchedule[self.botOffset])
 
             self.botOffset += 1
 
+        self.verifyTraining()
+
         #train on the data
         self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=7, verbose=0)
+
+        self.verifyTraining()
+
+        #save the current network
+        self.currentNetwork.saveModel()
 
     #play all the games against one specific bot and add the data to the training data
     def playBot(self, gameNum):
@@ -158,11 +164,17 @@ class Trainer ():
         else:
 
             return False
+        
+    #check how well the model conformed to the training
+    def verifyTraining(self):
+
+        cost = keras.losses.mean_absolute_error(self.outputTrainData, self.currentNetwork.model.predict_on_batch(np.array(self.inputTrainData)).T[0])
+        print('Current loss on training set: ' + str(cost.numpy()))
 
     #test the network on some archived positions (not for training...just a way to reality check)
     def validate(self):
-        
-        print('Current loss on training set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
+
+        print('Current loss on testing set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
 
 #get a distibution of opponents given a number of games to play (play better bots more)
 def getGameDist(gameNum, opponentNum):
@@ -170,7 +182,7 @@ def getGameDist(gameNum, opponentNum):
     for i in range(0, opponentNum):
         gameList[i] = gameDist(i, opponentNum)
     gameList = (gameList * gameNum).astype(int)
-    print(gameList)
+    return gameList
 
 #game distibution function --> used in getGameDist
 def gameDist(index, n):

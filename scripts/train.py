@@ -2,6 +2,6 @@
 
 import lib.Trainer as Trainer
 
-trainer = Trainer.Trainer(games=1, startNoise=0.1)
+trainer = Trainer.Trainer()
 
-trainer.trainSession(1)
+trainer.trainSession(1, 100)
