@@ -12,8 +12,8 @@ model = Network.Model(offset=0)
 playerDic = {
     ('h', 'w') : Players.Human(),
     ('h', 'b') : Players.Human(),
-    ('b', 'w') : Players.Bot(1, model),
-    ('b', 'b') : Players.Bot(0, model),
+    ('b', 'w') : Players.Bot(1, model, noise=0.0),
+    ('b', 'b') : Players.Bot(0, model, noise=0.0),
     ('r', 'w') : Players.Bot(1, model, noise=2.0),
     ('r', 'b') : Players.Bot(0, model, noise=2.0)
 }

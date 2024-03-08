@@ -22,10 +22,11 @@ path = path[0 : len(path) - 8]
 
 class Trainer ():
 
-    def __init__(self, networkOffset=0, startNoise=0.1, opponentNum=9):
+    def __init__(self, networkOffset=0, startNoise=0.1, opponentNum=9, saveCount=5):
 
         self.noise = startNoise
         self.opponentNum = opponentNum
+        self.saveCount = saveCount
 
         self.currentNetwork = Network.Model(offset=networkOffset)
 
@@ -46,9 +47,18 @@ class Trainer ():
             
             self.trainEpoch()
 
-            #self.validate() FIXME make some sort of monitering system
-
             epochCount += 1
+
+            #if we are due to update the network
+            if epochCount % self.saveCount == 0:
+                #save the current network
+                self.currentNetwork.saveModel()
+
+        #if we haven't just saved a network
+        if epochCount % self.saveCount != 0:
+            #save the current network
+            self.currentNetwork.saveModel()
+
 
     #train one epoch of games (and create one new model)
     def trainEpoch(self):
@@ -77,17 +87,19 @@ class Trainer ():
             #play all the games against one bot
             self.playBot(self.gameSchedule[self.botOffset])
 
+            #save game for loging purposes
+            self.game.saveGame()
+
             self.botOffset += 1
 
         self.verifyTraining()
 
         #train on the data
-        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=7, verbose=0)
+        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=14, verbose=0)
 
         self.verifyTraining()
 
-        #save the current network
-        self.currentNetwork.saveModel()
+        self.validate()
 
     #play all the games against one specific bot and add the data to the training data
     def playBot(self, gameNum):
