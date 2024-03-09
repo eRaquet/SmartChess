@@ -66,9 +66,15 @@ class Trainer ():
         self.inputTrainData = np.ndarray((0, 769), np.bool_)
         self.outputTrainData = np.ndarray(0)
 
-        #define an array that keeps track of how many wins the current model has had against other models
-        #this is to be compared with the array of scheduled games
+        #an array that keeps track of how many wins the current model has had against other models
+        #this is to be compared with self.gamesPerBot
         self.winsPerBot = np.zeros(self.opponentNum, int)
+
+        #an array that keeps track of how many games have been completed against other models
+        self.completionsPerBot = np.zeros(self.opponentNum, int)
+
+        #an array the keeps track of how many games have been attempted against other models
+        self.gamesPerBot = np.zeros(self.opponentNum, int)
 
         #the list of bots that have already been loaded into the session
         #indexed by offset value (loadedBots[n] => model_"(maxIndex - n)".keras)
@@ -92,29 +98,28 @@ class Trainer ():
 
             self.botOffset += 1
 
-        self.verifyTraining()
+        preTrainCost = self.verifyTraining()
 
         #train on the data
-        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=14, verbose=0)
+        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=40, verbose=0)
 
-        self.verifyTraining()
+        postTrainCost = self.verifyTraining()
 
-        self.validate()
+        self.moniterTraining(preTrainCost, postTrainCost)
+        #self.validate()
 
     #play all the games against one specific bot and add the data to the training data
     def playBot(self, gameNum):
 
-        winCount = 0
-
-        while winCount != gameNum:
+        while self.completionsPerBot[self.botOffset] != gameNum:
 
             #play a game against the current bot (using implicit pass of botOffset from trainEpoch())
             outcome = self.playGame()
 
-            self.games += 1
+            self.gamesPerBot[self.botOffset] += 1
 
             if outcome:
-                winCount += 1
+                self.completionsPerBot[self.botOffset] += 1
                 winner = not self.game.board.turn
 
                 #get dataset
@@ -141,9 +146,7 @@ class Trainer ():
                     #add one to the appropriate tally
                     self.winsPerBot[self.botOffset] += 1
 
-        #record how many times the mainBot won over the contender
-        #(for recording purposes)
-        
+            self.moniterSchedule()
 
     #play a game to its end, and return the outcome
     def playGame(self):
@@ -181,12 +184,46 @@ class Trainer ():
     def verifyTraining(self):
 
         cost = keras.losses.mean_absolute_error(self.outputTrainData, self.currentNetwork.model.predict_on_batch(np.array(self.inputTrainData)).T[0])
-        print('Current loss on training set: ' + str(cost.numpy()))
+        return cost.numpy()
 
     #test the network on some archived positions (not for training...just a way to reality check)
     def validate(self):
 
-        print('Current loss on testing set: ' + str(self.currentNetwork.model.evaluate(self.testPos, self.testEval)))
+        return self.currentNetwork.model.evaluate(self.testPos, self.testEval)
+
+    #handle monitering system for playing schedule (something lightweight)
+    def moniterSchedule(self):
+
+        if sum(self.gamesPerBot) != 1:
+            #clear lines
+            print("\033[F" * 6)
+        else:
+            print("-" * 60)
+
+        remainingGames = sum(self.gameSchedule) - sum(self.completionsPerBot)
+
+        #print remaining games
+        print("Games to play: " + str(remainingGames) + " | Games completed: " + str(sum(self.completionsPerBot)))
+
+        #print total wins
+        print("Wins against each bot: ", end='')
+        print(list(self.winsPerBot))
+
+        #print total completions
+        print("Completions against each bot: ", end='')
+        print(list(self.completionsPerBot))
+
+        #print total games
+        print("Games against each bot: ", end='')
+        print(list(self.gamesPerBot))
+
+        print("-" * 60)
+
+    #handle monitering system for training
+    def moniterTraining(self, startCost, endCost):
+
+        print("Training on " + str(len(self.inputTrainData)) + " dataSets...")
+        print("Starting cost: " + f"{startCost:.3}" + " | Final cost: " + f"{endCost:.3}")
 
 #get a distibution of opponents given a number of games to play (play better bots more)
 def getGameDist(gameNum, opponentNum):
