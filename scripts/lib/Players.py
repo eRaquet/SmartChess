@@ -34,7 +34,6 @@ class Bot ():
         self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
 
         self.positions = []
-        self.evaluations = []
         self.boardStack = np.ndarray((1, 12*64 + self.auxParam), np.bool_)
         
         #the index location of each piece type (aux, pawn, rook, knight, bishop, queen, king)
@@ -196,6 +195,6 @@ class Bot ():
     #adjust a square index by color
     def squareIndex(self, square):
         if self.color == chess.BLACK:
-            return 63 - square
+            return 8 * (7 - int(square / 8)) + square % 8
         else:
             return square

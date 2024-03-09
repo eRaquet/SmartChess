@@ -53,7 +53,7 @@ class Display ():
             column = square % 8
             row = 7 - int((square - square % 8) / 8)
             lightDark = not bool((column + row) % 2)
-            color = (60 + 160 * lightDark, 35 + 130 * lightDark, 15 + 40 * lightDark)
+            color = (60 + 160 * lightDark, 35 + 130 * lightDark, 15 + 40 * lightDark) #<- this is to create nice indication colors
 
             pg.draw.rect(self.surf, color, pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
 
