@@ -75,10 +75,20 @@ class Bot ():
             #make each move and add their bit boards to the move stack
             for i in range(0, len(self.legalMoves)):
 
-                #generate a bit board move
+                #get a move
                 move = self.legalMoves[i]
+
+                #generate bit board for move
                 bitBoard = self.bitBoardFromMove(move)
                 self.boardStack[i] = bitBoard
+
+                #check for checkmates
+                self.board.push(move)
+                if self.board.is_checkmate():
+                    self.positions.append(bitBoard)
+                    self.board.pop()
+                    return move
+                self.board.pop()
             
             #once all moves have been implimented, evaluate them with the current network and get the index of the best move
             index = self.evaluate(self.boardStack)

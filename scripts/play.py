@@ -4,6 +4,7 @@ import lib.Game as Game
 import lib.Players as Players
 import lib.Network as Network
 import pygame as pg
+import time
 
 #initiate our current netowrk
 model = Network.Model(offset=0)
@@ -12,8 +13,8 @@ model = Network.Model(offset=0)
 playerDic = {
     ('h', 'w') : Players.Human(),
     ('h', 'b') : Players.Human(),
-    ('b', 'w') : Players.Bot(1, model, noise=0.0),
-    ('b', 'b') : Players.Bot(0, model, noise=0.0),
+    ('b', 'w') : Players.Bot(1, model, noise=0.2),
+    ('b', 'b') : Players.Bot(0, model, noise=0.2),
     ('r', 'w') : Players.Bot(1, model, noise=2.0),
     ('r', 'b') : Players.Bot(0, model, noise=2.0)
 }
@@ -51,8 +52,10 @@ while True:
 
                         if event.type == pg.MOUSEBUTTONDOWN:
 
+                            t = time.time()
                             game.makeMove()
-            
+                            print(time.time() - t)
+
             print("Do you want to play again? (y/n) ", end='')
 
             if input() != 'y':
