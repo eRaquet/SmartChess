@@ -101,7 +101,7 @@ class Trainer ():
         preTrainCost = self.verifyTraining()
 
         #train on the data
-        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=40, verbose=0)
+        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=60, verbose=0)
 
         postTrainCost = self.verifyTraining()
 

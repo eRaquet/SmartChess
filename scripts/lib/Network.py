@@ -11,7 +11,7 @@ path = path[0 : len(path) - 8]
 class Model ():
 
     #initiate a neural network with a certain shape
-    def __init__(self, dim=None, offset=None):
+    def __init__(self, dim=None, offset=None, index=None):
             
         if dim != None:
 
@@ -31,7 +31,11 @@ class Model ():
 
         elif offset != None:
 
-            self.loadModel(offset)
+            self.loadModelOffset(offset)
+
+        elif index != None:
+
+            self.loadModelIndex(index)
 
     def saveModel(self):
 
@@ -55,7 +59,7 @@ class Model ():
 
         netConfig.close()
 
-    def loadModel(self, indexOffset):
+    def loadModelOffset(self, indexOffset):
 
         with open(path + '\\savedNetworks\\config.csv') as netConfig:
 
@@ -77,3 +81,11 @@ class Model ():
             index = netNum - 1
 
         self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
+
+    def loadModelIndex(self, index):
+
+        try:
+            self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
+            return 1
+        except:
+            return 0
