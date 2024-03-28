@@ -34,10 +34,11 @@ class Trainer ():
         self.testEval = np.load(path + '\\testPositions\\testEvaluations.npy')
 
     #train an entire session
-    def trainSession(self, epochs, gameNum):
+    def trainSession(self, epochs, gameNum, splitFraction = 0.5):
 
         epochCount = 0
-        self.gamesPerEpoch = gameNum
+        self.broadGameCount = int(splitFraction * gameNum) #the number of games we play agianst all the bots together
+        self.narrowGameCount = gameNum - self.broadGameCount #the number of games we play against the victor bots
 
         #train each epoch of games
         while epochCount < epochs:
@@ -81,17 +82,33 @@ class Trainer ():
         self.loadedBots = []
 
         #generate the scheduled games
-        self.gameSchedule = getGameDist(self.gamesPerEpoch, self.opponentNum)
+        self.broadGameSchedule = getGameDist(self.broadGameCount, self.opponentNum)
+        self.narrowGameSchedule = np.zeros(self.opponentNum)
 
         self.botOffset = 0
 
+        #play all the bots in the broad game schedule
         while self.botOffset != self.opponentNum:
 
             #load opponent bot (first one will be self)
             self.loadedBots.append(Network.Model(offset=self.botOffset))
 
             #play all the games against one bot
-            self.playBot(self.gameSchedule[self.botOffset])
+            self.playBot(self.broadGameSchedule[self.botOffset])
+
+            #save game for loging purposes
+            self.game.saveGame()
+
+            self.botOffset += 1
+
+        self.narrowGameSchedule = victorDistrobution(self.completionsPerBot, (self.completionsPerBot - self.winsPerBot), self.narrowGameCount)
+        self.botOffset = 0
+
+        #play all the bots in the narrow game schedule
+        while self.botOffset != self.opponentNum:
+
+            #play all the games against one bot
+            self.playBot(self.narrowGameSchedule[self.botOffset])
 
             #save game for loging purposes
             self.game.saveGame()
@@ -110,6 +127,11 @@ class Trainer ():
 
     #play all the games against one specific bot and add the data to the training data
     def playBot(self, gameNum):
+
+        #check if we have already finished our broad schedule
+        if sum(self.narrowGameSchedule) != 0:
+            #adjust gameNum
+            gameNum += self.broadGameSchedule[self.botOffset]
 
         while self.completionsPerBot[self.botOffset] != gameNum:
 
@@ -200,10 +222,10 @@ class Trainer ():
         else:
             print("-" * 60)
 
-        remainingGames = sum(self.gameSchedule) - sum(self.completionsPerBot)
+        remainingGames = sum(self.broadGameSchedule) + sum(self.narrowGameSchedule) - sum(self.completionsPerBot)
 
         #print remaining games
-        print("Games to play: " + str(remainingGames) + " | Games completed: " + str(sum(self.completionsPerBot)))
+        print("Games to play: " + str(remainingGames) + " | Games completed: " + str(sum(self.completionsPerBot)) + "   ")
 
         #print total wins
         print("Wins against each bot: ", end='')
@@ -237,8 +259,10 @@ def getGameDist(gameNum, opponentNum):
 def gameDist(index, n):
 
     #adjust index to function to a midpoint rectagular approximation
-    index += 0.5
-    return (-2 / n**2) * index + (2 / n)
+    #index += 0.5
+    #return (-2 / n**2) * index + (2 / n)
+
+    return 1 / n
 
 #reward function
 def rewardVal(length):
@@ -246,3 +270,13 @@ def rewardVal(length):
     #a constant term and a dependant term
     value = 0.2 - (0.2 / 60) * length
     return max(value, 0.02)
+
+def victorDistrobution(gamesPlayed, gamesLost, gameNum):
+
+    #take the normalized distrobution of losses to total games
+    victorDist = (gamesLost / gamesPlayed) / sum(gamesLost / gamesPlayed)
+
+    #multiply the distrobution by the number of games and cast to int
+    victorGames = (victorDist * gameNum).astype(int)
+
+    return victorGames
