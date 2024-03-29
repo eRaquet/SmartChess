@@ -48,7 +48,7 @@ while completionCount != gameNum:
     if game.board.is_checkmate():
         winner = not game.board.turn
         completionCount += 1
-        if winner == rand:
+        if winner != rand:
             win1Count += 1
         else:
             win2Count += 1

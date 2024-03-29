@@ -2,6 +2,6 @@
 
 import lib.Trainer as Trainer
 
-trainer = Trainer.Trainer(opponentNum=2)
+trainer = Trainer.Trainer()
 
-trainer.trainSession(1, 20)
+trainer.trainSession(25, 140)
