@@ -35,9 +35,9 @@ while completionCount != gameNum:
     rand = bool(round(random.random()))
 
     if rand:
-        game = Game.Game([Players.Bot(0, net1, noise=0.1), Players.Bot(1, net2, noise=0.1)], display=False)
+        game = Game.Game([Players.Bot(0, net1, confidence=5.0), Players.Bot(1, net2, confidence=5.0)], display=False)
     else:
-        game = Game.Game([Players.Bot(0, net2, noise=0.1), Players.Bot(1, net1, noise=0.1)], display=False)
+        game = Game.Game([Players.Bot(0, net2, confidence=5.0), Players.Bot(1, net1, confidence=5.0)], display=False)
     
     while game.isEnd() == False:
         game.makeMove()

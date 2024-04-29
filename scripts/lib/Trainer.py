@@ -22,9 +22,9 @@ path = path[0 : len(path) - 8]
 
 class Trainer ():
 
-    def __init__(self, networkOffset=0, startNoise=0.1, opponentNum=9, saveCount=5):
+    def __init__(self, networkOffset=0, startConfidence=5.0, opponentNum=9, saveCount=5):
 
-        self.noise = startNoise
+        self.confidence = startConfidence
         self.opponentNum = opponentNum
         self.saveCount = saveCount
 
@@ -185,8 +185,8 @@ class Trainer ():
             whiteBot = self.loadedBots[self.botOffset]
             blackBot = self.currentNetwork
 
-        self.white = Players.Bot(chess.WHITE, whiteBot, self.noise)
-        self.black = Players.Bot(chess.BLACK, blackBot, self.noise)
+        self.white = Players.Bot(chess.WHITE, whiteBot, self.confidence)
+        self.black = Players.Bot(chess.BLACK, blackBot, self.confidence)
         self.game = Game.Game([self.black, self.white], display=False)
 
         while self.game.isEnd() == False:

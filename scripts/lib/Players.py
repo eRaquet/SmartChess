@@ -29,7 +29,7 @@ class Human ():
     
 class Bot ():
 
-    def __init__(self, color, network, noise=0.0):
+    def __init__(self, color, network, confidence=0.0):
 
         self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
 
@@ -55,7 +55,7 @@ class Bot ():
         self.color = color
 
         self.network = network
-        self.noise = noise
+        self.confidence = confidence
 
     def getMove(self, board, display, boardMap):
 
@@ -64,50 +64,34 @@ class Bot ():
         self.legalMoves = list(board.legal_moves)
         self.boardStack = np.ndarray((len(self.legalMoves), 12*64 + self.auxParam), np.bool_)
 
-        #check if this move should be a random move
-        rand = (random.random() < self.noise)
+        bestMove = None #best move so far (according to the model)
 
-        #if move is not random
-        if not rand:
+        #make each move and add their bit boards to the move stack
+        for i in range(0, len(self.legalMoves)):
 
-            bestMove = None #best move so far (according to the model)
+            #get a move
+            move = self.legalMoves[i]
 
-            #make each move and add their bit boards to the move stack
-            for i in range(0, len(self.legalMoves)):
+            #generate bit board for move
+            bitBoard = self.bitBoardFromMove(move)
+            self.boardStack[i] = bitBoard
 
-                #get a move
-                move = self.legalMoves[i]
-
-                #generate bit board for move
-                bitBoard = self.bitBoardFromMove(move)
-                self.boardStack[i] = bitBoard
-
-                #check for checkmates
-                self.board.push(move)
-                if self.board.is_checkmate():
-                    self.positions.append(bitBoard)
-                    self.board.pop()
-                    return move
+            #check for checkmates
+            self.board.push(move)
+            if self.board.is_checkmate():
+                self.positions.append(bitBoard)
                 self.board.pop()
-            
-            #once all moves have been implimented, evaluate them with the current network and get the index of the best move
-            index = self.evaluate(self.boardStack)
+                return move
+            self.board.pop()
+        
+        #once all moves have been implimented, evaluate them with the current network and get the index of the best move
+        index = self.evaluate(self.boardStack)
 
-            bestMove = self.legalMoves[index]
-            self.positions.append(self.boardStack[index])
+        bestMove = self.legalMoves[index]
+        self.positions.append(self.boardStack[index])
 
-            return bestMove
+        return bestMove
     
-        #move is random
-        else:
-
-            #pick random move
-            bestMove = random.choice(self.legalMoves)
-            index = self.legalMoves.index(bestMove)
-
-            self.positions.append(self.bitBoardFromMove(bestMove))
-
-            return bestMove
 
     #get an updated bit board logically with information about the move (meant to speed up computation)
     def bitBoardFromMove(self, move):
@@ -182,14 +166,40 @@ class Bot ():
     #evalutate a set of board positions
     def evaluate(self, boardPositions):
 
+        #evaluate positions
         eval = self.network.model.predict_on_batch(boardPositions).T[0]
-        
-        #pick best evaluation
-        self.bestEval = eval.max()
 
-        #get index of best evaluation
-        index = list(eval).index(self.bestEval)
-        return index
+        #if playing on maximum confidence (no exploration)
+        if self.confidence == float("inf"):
+
+            #pick the highest evaluation
+            
+            #pick best evaluation
+            self.bestEval = eval.max()
+
+            #get index of best evaluation
+            index = list(eval).index(self.bestEval)
+            return index
+        
+        #if not playing on maximum confidence
+        else:
+            
+            if sum((eval - np.ones(len(eval)) * eval.mean()) != np.zeros(len(eval))):
+                #create a normalized distrubtion of moves
+                #raised to the power of our confidence level.
+                #this will allow good moves to rise to the top of the distrobution
+                #while still allowing exploration to occur.
+                #the goal is to have better exploration of the model's entire state-space
+
+                #step by step construction of distribution
+                eval -= min(eval)
+                eval /= sum(eval)
+                eval = eval**self.confidence
+                eval /= sum(eval)
+                index = np.random.choice(range(0, len(self.legalMoves)), p=eval)
+                return index
+            else:
+                return 0
     
     #create a bit board from the current board position
     def initPos(self, currentMap):
