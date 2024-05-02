@@ -15,6 +15,7 @@ class Model ():
             
         if dim != None:
 
+            '''
             self.inputLayer = keras.Input(dim[0], dtype='bool')
             x = self.inputLayer
             
@@ -28,6 +29,28 @@ class Model ():
             self.model = keras.Model(inputs=self.inputLayer, outputs=self.outputLayer, name='boardEval')
             self.opt = keras.optimizers.Adam(learning_rate = 0.00001)
             self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
+            '''
+
+            #create inputs
+            self.boardLayer = keras.Input((8, 8, 12), dtype='float32')
+            self.paripheralLayer = keras.Input(5, dtype='float32')
+
+            #convolve the board input
+            x = layers.Conv2D(dim[0], 3, activation='relu', data_format='channels_last')(self.boardLayer)
+            x = layers.Conv2D(dim[1], 3, activation='relu', data_format='channels_last')(x)
+            x = layers.Conv2D(dim[2], 4, activation='relu', data_format='channels_last')(x)
+            self.boardOutputLayer = layers.Reshape((dim[2],))(x)
+
+            #combine the board convolution and the paripheral inputs
+            self.outputLayer = layers.concatenate([self.boardOutputLayer, self.paripheralLayer])
+            self.outputLayer = layers.Dense(dim[3], activation='relu')(self.outputLayer)
+            self.outputLayer = layers.Dense(1, activation='tanh')(self.outputLayer)
+
+            #create model
+            self.model = keras.Model(inputs=[self.boardLayer, self.paripheralLayer], outputs=self.outputLayer, name='boardEval')
+            self.opt = keras.optimizers.Adam(learning_rate = 0.00001)
+            self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
+
 
         elif offset != None:
 

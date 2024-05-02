@@ -31,25 +31,25 @@ class Bot ():
 
     def __init__(self, color, network, confidence=0.0):
 
-        self.auxParam = 1 #number of extra parameters given to the network other than the board (check, stalemate, etc.)
 
-        self.positions = []
-        self.boardStack = np.ndarray((1, 12*64 + self.auxParam), np.bool_)
+        self.positions = [] #boards represented by 3D bitBoard
+        self.peripherals = [] #array of peripherals (stalemate, casling)
+        self.boardStack = np.ndarray((1, 8, 8, 12), np.bool_)
         
         #the index location of each piece type (aux, pawn, rook, knight, bishop, queen, king)
         self.pieceIndex = {
             chess.PAWN : 0,
-            chess.KNIGHT : 2 * 64,
-            chess.BISHOP : 4 * 64,
-            chess.ROOK : 6 * 64,
-            chess.QUEEN : 8 * 64,
-            chess.KING : 10 * 64
+            chess.KNIGHT : 1,
+            chess.BISHOP : 2,
+            chess.ROOK : 3,
+            chess.QUEEN : 4,
+            chess.KING : 5
         }
 
         #the index offset of each piece color (my piece, other player's piece)
         self.colorOffset = {
             color : 0,
-            not color : 64
+            not color : 6
         }
 
         self.color = color
@@ -62,7 +62,8 @@ class Bot ():
         self.board = board
         self.initPos(boardMap)
         self.legalMoves = list(board.legal_moves)
-        self.boardStack = np.ndarray((len(self.legalMoves), 12*64 + self.auxParam), np.bool_)
+        self.boardStack = np.zeros((len(self.legalMoves), 8, 8, 12), np.bool_)
+        self.peripheralStack = np.zeros((len(self.legalMoves), 5), np.bool_)
 
         bestMove = None #best move so far (according to the model)
 
@@ -72,10 +73,6 @@ class Bot ():
             #get a move
             move = self.legalMoves[i]
 
-            #generate bit board for move
-            bitBoard = self.bitBoardFromMove(move)
-            self.boardStack[i] = bitBoard
-
             #check for checkmates
             self.board.push(move)
             if self.board.is_checkmate():
@@ -83,12 +80,25 @@ class Bot ():
                 self.board.pop()
                 return move
             self.board.pop()
+
+            #generate bit board for move
+            bitBoard = self.bitBoardFromMove(move)
+            #generate periphals
+            per = np.array([np.count_nonzero(np.all(self.positions == bitBoard, axis=(1, 2, 3))) > 1,
+                            self.board.castling_rights & chess.BB_A1,
+                            self.board.castling_rights & chess.BB_A8,
+                            self.board.castling_rights & chess.BB_H8,
+                            self.board.castling_rights & chess.BB_H1])
+            
+            self.boardStack[i] = bitBoard
+            self.peripheralStack[i] = per
         
         #once all moves have been implimented, evaluate them with the current network and get the index of the best move
-        index = self.evaluate(self.boardStack)
+        index = self.evaluate(self.boardStack, self.peripheralStack)
 
         bestMove = self.legalMoves[index]
         self.positions.append(self.boardStack[index])
+        self.peripherals.append(self.peripheralStack[index])
 
         return bestMove
     
@@ -101,7 +111,7 @@ class Bot ():
         movePos = self.boardPos.copy() #copy the current bit board, and then make changes to it
 
         #remove the fromSquare from the bit board (happens no matter what kind of move it is)
-        movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + fromSquare] = False
+        movePos[chess.square_file(fromSquare)][chess.square_rank(fromSquare)][self.pieceIndex[pieceType] + self.colorOffset[self.color]] = False
 
         #if the move is not a capture
         if not (move.to_square in self.currentMap):
@@ -116,58 +126,59 @@ class Bot ():
                     if pieceType == chess.PAWN and (abs(toSquare - fromSquare) == 7 or abs(toSquare - fromSquare) == 9):
 
                         #get rid of the captured pawn
-                        movePos[self.pieceIndex[chess.PAWN] + self.colorOffset[not self.color] + toSquare - 8] = False
+                        movePos[chess.square_file(toSquare)][chess.square_rank(toSquare) - 1][self.pieceIndex[chess.PAWN] + self.colorOffset[not self.color]] = False
 
                     #add the piece to the bit board in its new position
-                    movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] = True
+                    movePos[chess.square_file(toSquare)][chess.square_rank(toSquare)][self.pieceIndex[pieceType] + self.colorOffset[self.color]] = True
 
                 #the move is a promotion
                 else:
 
                     #add the promoted piece to the bit board in its position
-                    movePos[self.pieceIndex[move.promotion] + self.colorOffset[self.color] + toSquare] = True
+                    movePos[chess.square_file(toSquare)][7][self.pieceIndex[move.promotion] + self.colorOffset[self.color]] = True
 
             #the move is a casle
             else:
 
                 #delete rook from bit board
-                movePos[self.pieceIndex[chess.ROOK] + self.colorOffset[self.color] + int((toSquare - fromSquare + 2)/4) * 7] = False #the 56 logic effectivally chooses which file to delete the rook from
+                if toSquare > fromSquare: 
+                    movePos[7][0][self.pieceIndex[chess.ROOK] + self.colorOffset[self.color]] = False
+                    #place rook next the king
+                    movePos[chess.square_file(toSquare) + 1][chess.square_rank(toSquare)][self.pieceIndex[chess.ROOK] + self.colorOffset[self.color]] = True
+                else:
+                    movePos[0][0][self.pieceIndex[chess.ROOK] + self.colorOffset[self.color]] = False
+                    #place rook next the king
+                    movePos[chess.square_file(toSquare) - 1][chess.square_rank(toSquare)][self.pieceIndex[chess.ROOK] + self.colorOffset[self.color]] = True
 
                 #place king two squares offset from origin
-                movePos[self.pieceIndex[chess.KING] + self.colorOffset[self.color] + toSquare] = True
+                movePos[chess.square_file(toSquare)][chess.square_rank(toSquare)][self.pieceIndex[chess.KING] + self.colorOffset[self.color]] = True
 
-                #place rook next the king
-                movePos[self.pieceIndex[chess.ROOK] + self.colorOffset[self.color] + fromSquare + int((toSquare - fromSquare)/2)] = True
 
         #the move is a capture
         else:
             
             #remove the captured piece
             capturedPiece = self.currentMap[move.to_square].piece_type
-            movePos[self.pieceIndex[capturedPiece] + self.colorOffset[not self.color] + toSquare] = False
+            movePos[chess.square_file(toSquare)][chess.square_rank(toSquare)][self.pieceIndex[capturedPiece] + self.colorOffset[self.color]] = False
 
             if move.promotion == None:
 
                 #add the piece to the bit board in its new position
-                movePos[self.pieceIndex[pieceType] + self.colorOffset[self.color] + toSquare] = True
+                movePos[chess.square_file(toSquare)][chess.square_rank(toSquare)][self.pieceIndex[pieceType] + self.colorOffset[self.color]] = True
 
             #the move is a promotion
             else:
 
                 #add the promoted piece to the bit board in its position
-                movePos[self.pieceIndex[move.promotion] + self.colorOffset[self.color] + toSquare] = True
-
-        #check for three-fold repetition
-        if np.count_nonzero(np.all(self.boardStack == movePos, axis=1)) > 1:
-            movePos[12 * 64] = True #toggle the three-fold repetition bit
+                movePos[chess.square_file(toSquare)][chess.square_rank(toSquare)][self.pieceIndex[move.promotion] + self.colorOffset[self.color]] = True
 
         return movePos
 
     #evalutate a set of board positions
-    def evaluate(self, boardPositions):
+    def evaluate(self, boardPositions, peripherals):
 
         #evaluate positions
-        eval = self.network.model.predict_on_batch(boardPositions).T[0]
+        eval = self.network.model.predict_on_batch([boardPositions.astype(np.float64), peripherals.astype(np.float64)]).T[0]
 
         #if playing on maximum confidence (no exploration)
         if self.confidence == float("inf"):
@@ -204,13 +215,13 @@ class Bot ():
     #create a bit board from the current board position
     def initPos(self, currentMap):
 
-        self.boardPos = np.zeros(12*64 + self.auxParam, np.bool_)
+        self.boardPos = np.zeros((8, 8, 12), np.bool_)
         self.currentMap = currentMap #this map is not flipped to account for the bot's color
 
         for square in currentMap:
 
             #add piece to the bit map
-            self.boardPos[self.pieceIndex[currentMap[square].piece_type] + self.colorOffset[currentMap[square].color] + self.squareIndex(square)] = True
+            self.boardPos[chess.square_file(self.squareIndex(square))][chess.square_rank(self.squareIndex(square))][self.pieceIndex[currentMap[square].piece_type] + self.colorOffset[currentMap[square].color]] = True
 
     #adjust a square index by color
     def squareIndex(self, square):

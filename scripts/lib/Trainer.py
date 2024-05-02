@@ -64,7 +64,8 @@ class Trainer ():
     #train one epoch of games (and create one new model)
     def trainEpoch(self):
 
-        self.inputTrainData = np.ndarray((0, 769), np.bool_)
+        self.boardTrainData = np.ndarray((0, 8, 8, 12))
+        self.periTrainData = np.ndarray((0, 5))
         self.outputTrainData = np.ndarray(0)
 
         #an array that keeps track of how many wins the current model has had against other models
@@ -118,7 +119,7 @@ class Trainer ():
         preTrainCost = self.verifyTraining()
 
         #train on the data
-        self.currentNetwork.model.fit(x=self.inputTrainData, y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=60, verbose=0)
+        self.currentNetwork.model.fit(x=[self.boardTrainData, self.periTrainData], y=self.outputTrainData, batch_size=len(self.outputTrainData), epochs=60, verbose=0)
 
         postTrainCost = self.verifyTraining()
 
@@ -145,8 +146,10 @@ class Trainer ():
                 winner = not self.game.board.turn
 
                 #get dataset
-                winnerData = self.game.players[winner].positions
-                loserData = self.game.players[not winner].positions
+                winnerBoards = self.game.players[winner].positions
+                loserBoards = self.game.players[not winner].positions
+                winnerPeri = self.game.players[winner].peripherals
+                loserPeri = self.game.players[not winner].peripherals
 
                 #I can't use a fixed offset (-1 or 1) for my evaluation, because worse positions will receive higher gradients.
                 #I can't use logged evaluations, because they may conform my network to previous versions.
@@ -154,13 +157,14 @@ class Trainer ():
                 #The best strategy will be to evaluate all the positions with the current network, and accept the error between
                 #different models choices.
 
-                winnerEvaluations = self.currentNetwork.model.predict_on_batch(np.array(self.game.players[winner].positions)).T[0]
-                loserEvaluations = self.currentNetwork.model.predict_on_batch(np.array(self.game.players[not winner].positions)).T[0]
+                winnerEvaluations = self.currentNetwork.model.predict_on_batch([np.array(winnerBoards), np.array(winnerPeri)]).T[0]
+                loserEvaluations = self.currentNetwork.model.predict_on_batch([np.array(loserBoards), np.array(loserPeri)]).T[0]
 
                 #apply correction to the model
-                winnerOutput = np.clip(winnerEvaluations + rewardVal(len(winnerData)), -1.0, 1.0)
-                loserOutput = np.clip(loserEvaluations - rewardVal(len(loserData)), -1.0, 1.0)
-                self.inputTrainData = np.concatenate((self.inputTrainData, winnerData, loserData), axis=0)
+                winnerOutput = np.clip(winnerEvaluations + rewardVal(len(winnerPeri)), -1.0, 1.0)
+                loserOutput = np.clip(loserEvaluations - rewardVal(len(loserPeri)), -1.0, 1.0)
+                self.boardTrainData = np.concatenate((self.boardTrainData, winnerBoards, loserBoards), axis=0)
+                self.periTrainData = np.concatenate((self.boardTrainData, winnerPeri, loserPeri), axis=0)
                 self.outputTrainData = np.concatenate((self.outputTrainData, winnerOutput, loserOutput), axis=0)
 
                 #check if the bot that one was the main bot
@@ -244,7 +248,7 @@ class Trainer ():
     #handle monitering system for training
     def moniterTraining(self, startCost, endCost):
 
-        print("Training on " + str(len(self.inputTrainData)) + " dataSets...")
+        print("Training on " + str(len(self.boardTrainData)) + " dataSets...")
         print("Starting cost: " + f"{startCost:.3}" + " | Final cost: " + f"{endCost:.3}")
 
 #get a distibution of opponents given a number of games to play (play better bots more)
