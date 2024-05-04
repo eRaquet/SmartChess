@@ -8,7 +8,7 @@ import keras
 import random
 import numpy as np
 import sys
-from IPython import clear_output
+from IPython.display import clear_output
 
 path = sys.path[0]
 
