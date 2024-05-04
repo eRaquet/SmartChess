@@ -165,7 +165,7 @@ class Trainer ():
                 winnerOutput = np.clip(winnerEvaluations + rewardVal(len(winnerPeri)), -1.0, 1.0)
                 loserOutput = np.clip(loserEvaluations - rewardVal(len(loserPeri)), -1.0, 1.0)
                 self.boardTrainData = np.concatenate((self.boardTrainData, winnerBoards, loserBoards), axis=0)
-                self.periTrainData = np.concatenate((self.boardTrainData, winnerPeri, loserPeri), axis=0)
+                self.periTrainData = np.concatenate((self.periTrainData, winnerPeri, loserPeri), axis=0)
                 self.outputTrainData = np.concatenate((self.outputTrainData, winnerOutput, loserOutput), axis=0)
 
                 #check if the bot that one was the main bot

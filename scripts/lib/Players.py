@@ -78,14 +78,6 @@ class Bot ():
             #generate bit board for move
             bitBoard = self.bitBoardFromMove(move)
 
-            #check for checkmates
-            self.board.push(move)
-            if self.board.is_checkmate():
-                self.positions.append(bitBoard)
-                self.board.pop()
-                return move
-            self.board.pop()
-
             #generate periphals
             per = np.array([False,
                             self.board.castling_rights & chess.BB_A1,
@@ -94,6 +86,15 @@ class Bot ():
                             self.board.castling_rights & chess.BB_H1])
             if len(self.positions) != 0:
                 per[0] = (np.count_nonzero(np.all(self.positions == bitBoard, axis=(1, 2, 3))) > 1)
+
+            #check for checkmates
+            self.board.push(move)
+            if self.board.is_checkmate():
+                self.positions.append(bitBoard)
+                self.peripherals.append(per)
+                self.board.pop()
+                return move
+            self.board.pop()
             
             self.boardStack[i] = bitBoard
             self.peripheralStack[i] = per
