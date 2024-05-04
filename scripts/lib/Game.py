@@ -42,12 +42,16 @@ class Game ():
 
         self.move = self.players[self.board.turn].getMove(self.board, self.display, self.boardMap)
 
+        t = time.time()
         #make move and update board map
         self.board.push(self.move)
         self.boardMap = self.board.piece_map()
+        print("make move: " + str(time.time() - t))
 
+        t = time.time()
         if self.display != None:
             self.display.displayBoard(self.board, boardMap=self.boardMap)
+        print("display board: " + str(time.time() - t))
 
     def saveGame(self):
 
@@ -57,7 +61,7 @@ class Game ():
 
             self.gameList.append(chess.Move.uci(self.board.move_stack[i]))
 
-        with open(path + '\\savedGames\\config.csv') as gameConfig:
+        with open(path + '/savedGames/config.csv') as gameConfig:
 
             read = csv.reader(gameConfig)
             
@@ -68,14 +72,14 @@ class Game ():
 
         gameConfig.close()
 
-        with open(path + '\\savedGames\\game_' + str(gameNum) + '.csv', 'w') as gameFile:
+        with open(path + '/savedGames/game_' + str(gameNum) + '.csv', 'w') as gameFile:
 
             write = csv.writer(gameFile)
             write.writerow(self.gameList)
 
         gameFile.close()
 
-        with open(path + '\\savedGames\\config.csv', 'w') as gameConfig:
+        with open(path + '/savedGames/config.csv', 'w') as gameConfig:
 
             write = csv.writer(gameConfig)
             write.writerow([str(int(gameNum) + 1)])

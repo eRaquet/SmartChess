@@ -59,19 +59,27 @@ class Bot ():
 
     def getMove(self, board, display, boardMap):
 
+        t = time.time()
         self.board = board
+
         self.initPos(boardMap)
+        
         self.legalMoves = list(board.legal_moves)
         self.boardStack = np.zeros((len(self.legalMoves), 8, 8, 12), np.bool_)
         self.peripheralStack = np.zeros((len(self.legalMoves), 5), np.bool_)
 
         bestMove = None #best move so far (according to the model)
+        print("board initiation: " + str(time.time() - t))
 
+        t = time.time()
         #make each move and add their bit boards to the move stack
         for i in range(0, len(self.legalMoves)):
 
             #get a move
             move = self.legalMoves[i]
+
+            #generate bit board for move
+            bitBoard = self.bitBoardFromMove(move)
 
             #check for checkmates
             self.board.push(move)
@@ -81,27 +89,29 @@ class Bot ():
                 return move
             self.board.pop()
 
-            #generate bit board for move
-            bitBoard = self.bitBoardFromMove(move)
             #generate periphals
-            per = np.array([np.count_nonzero(np.all(self.positions == bitBoard, axis=(1, 2, 3))) > 1,
+            per = np.array([False,
                             self.board.castling_rights & chess.BB_A1,
                             self.board.castling_rights & chess.BB_A8,
                             self.board.castling_rights & chess.BB_H8,
                             self.board.castling_rights & chess.BB_H1])
+            if len(self.positions) != 0:
+                per[0] = (np.count_nonzero(np.all(self.positions == bitBoard, axis=(1, 2, 3))) > 1)
             
             self.boardStack[i] = bitBoard
             self.peripheralStack[i] = per
+        print("building boards: " + str(time.time() - t))
         
+        t = time.time()
         #once all moves have been implimented, evaluate them with the current network and get the index of the best move
         index = self.evaluate(self.boardStack, self.peripheralStack)
 
         bestMove = self.legalMoves[index]
         self.positions.append(self.boardStack[index])
         self.peripherals.append(self.peripheralStack[index])
+        print("evaluating positions: " + str(time.time() - t))
 
-        return bestMove
-    
+        return bestMove    
 
     #get an updated bit board logically with information about the move (meant to speed up computation)
     def bitBoardFromMove(self, move):

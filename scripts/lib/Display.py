@@ -10,18 +10,18 @@ path = sys.path[0]
 path = path[0 : len(path) - 8]
 
 pieceImages = {
-    'p' : pg.image.load(path + '\\images\\blackPawn.png'),
-    'r' : pg.image.load(path + '\\images\\blackRook.png'),
-    'n' : pg.image.load(path + '\\images\\blackKnight.png'),
-    'b' : pg.image.load(path + '\\images\\blackBishop.png'),
-    'q' : pg.image.load(path + '\\images\\blackQueen.png'),
-    'k' : pg.image.load(path + '\\images\\blackKing.png'),
-    'P' : pg.image.load(path + '\\images\\whitePawn.png'),
-    'R' : pg.image.load(path + '\\images\\whiteRook.png'),
-    'N' : pg.image.load(path + '\\images\\whiteKnight.png'),
-    'B' : pg.image.load(path + '\\images\\whiteBishop.png'),
-    'Q' : pg.image.load(path + '\\images\\whiteQueen.png'),
-    'K' : pg.image.load(path + '\\images\\whiteKing.png')
+    'p' : pg.image.load(path + '/images/blackPawn.png'),
+    'r' : pg.image.load(path + '/images/blackRook.png'),
+    'n' : pg.image.load(path + '/images/blackKnight.png'),
+    'b' : pg.image.load(path + '/images/blackBishop.png'),
+    'q' : pg.image.load(path + '/images/blackQueen.png'),
+    'k' : pg.image.load(path + '/images/blackKing.png'),
+    'P' : pg.image.load(path + '/images/whitePawn.png'),
+    'R' : pg.image.load(path + '/images/whiteRook.png'),
+    'N' : pg.image.load(path + '/images/whiteKnight.png'),
+    'B' : pg.image.load(path + '/images/whiteBishop.png'),
+    'Q' : pg.image.load(path + '/images/whiteQueen.png'),
+    'K' : pg.image.load(path + '/images/whiteKing.png')
 }
 
 class Display ():

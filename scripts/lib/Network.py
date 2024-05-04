@@ -62,7 +62,7 @@ class Model ():
 
     def saveModel(self):
 
-        with open(path + '\\savedNetworks\\config.csv') as netConfig:
+        with open(path + '/savedNetworks/config.csv') as netConfig:
 
             read = csv.reader(netConfig)
             
@@ -73,9 +73,9 @@ class Model ():
 
         netConfig.close()
 
-        self.model.save(path + '\\savedNetworks\\model_' + str(netNum) + '.keras')
+        self.model.save(path + '/savedNetworks/model_' + str(netNum) + '.keras')
 
-        with open(path + '\\savedNetworks\\config.csv', 'w') as netConfig:
+        with open(path + '/savedNetworks/config.csv', 'w') as netConfig:
 
             write = csv.writer(netConfig)
             write.writerow([str(netNum + 1)])
@@ -84,7 +84,7 @@ class Model ():
 
     def loadModelOffset(self, indexOffset):
 
-        with open(path + '\\savedNetworks\\config.csv') as netConfig:
+        with open(path + '/savedNetworks/config.csv') as netConfig:
 
             read = csv.reader(netConfig)
             
@@ -103,12 +103,12 @@ class Model ():
 
             index = netNum - 1
 
-        self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
+        self.model = keras.models.load_model(path + '/savedNetworks/model_' + str(index) + '.keras')
 
     def loadModelIndex(self, index):
 
         try:
-            self.model = keras.models.load_model(path + '\\savedNetworks\\model_' + str(index) + '.keras')
+            self.model = keras.models.load_model(path + '/savedNetworks/model_' + str(index) + '.keras')
             return 1
         except:
             return 0

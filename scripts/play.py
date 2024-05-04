@@ -54,7 +54,7 @@ while True:
 
                             t = time.time()
                             game.makeMove()
-                            print(time.time() - t)
+                            print("move time: " + str(time.time() - t))
 
             print("Do you want to play again? (y/n) ", end='')
 
