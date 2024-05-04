@@ -8,6 +8,7 @@ import keras
 import random
 import numpy as np
 import sys
+from IPython import clear_output
 
 path = sys.path[0]
 
@@ -219,6 +220,8 @@ class Trainer ():
 
     #handle monitering system for playing schedule (something lightweight)
     def moniterSchedule(self):
+
+        clear_output()
 
         if sum(self.gamesPerBot) != 1:
             #clear lines
