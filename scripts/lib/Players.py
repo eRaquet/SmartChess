@@ -59,7 +59,6 @@ class Bot ():
 
     def getMove(self, board, display, boardMap):
 
-        t = time.time()
         self.board = board
 
         self.initPos(boardMap)
@@ -69,9 +68,7 @@ class Bot ():
         self.peripheralStack = np.zeros((len(self.legalMoves), 5), np.bool_)
 
         bestMove = None #best move so far (according to the model)
-        print("board initiation: " + str(time.time() - t))
 
-        t = time.time()
         #make each move and add their bit boards to the move stack
         for i in range(0, len(self.legalMoves)):
 
@@ -100,16 +97,13 @@ class Bot ():
             
             self.boardStack[i] = bitBoard
             self.peripheralStack[i] = per
-        print("building boards: " + str(time.time() - t))
         
-        t = time.time()
         #once all moves have been implimented, evaluate them with the current network and get the index of the best move
         index = self.evaluate(self.boardStack, self.peripheralStack)
 
         bestMove = self.legalMoves[index]
         self.positions.append(self.boardStack[index])
         self.peripherals.append(self.peripheralStack[index])
-        print("evaluating positions: " + str(time.time() - t))
 
         return bestMove    
 

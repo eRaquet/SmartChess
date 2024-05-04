@@ -42,16 +42,12 @@ class Game ():
 
         self.move = self.players[self.board.turn].getMove(self.board, self.display, self.boardMap)
 
-        t = time.time()
         #make move and update board map
         self.board.push(self.move)
         self.boardMap = self.board.piece_map()
-        print("make move: " + str(time.time() - t))
 
-        t = time.time()
         if self.display != None:
             self.display.displayBoard(self.board, boardMap=self.boardMap)
-        print("display board: " + str(time.time() - t))
 
     def saveGame(self):
 
