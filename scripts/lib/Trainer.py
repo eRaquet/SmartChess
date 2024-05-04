@@ -210,7 +210,7 @@ class Trainer ():
     #check how well the model conformed to the training
     def verifyTraining(self):
 
-        cost = keras.losses.mean_absolute_error(self.outputTrainData, self.currentNetwork.model.predict_on_batch(np.array(self.inputTrainData)).T[0])
+        cost = keras.losses.mean_absolute_error(self.outputTrainData, self.currentNetwork.model.predict_on_batch([np.array(self.boardTrainData), np.array(self.periTrainData)]).T[0])
         return cost.numpy()
 
     #test the network on some archived positions (not for training...just a way to reality check)
