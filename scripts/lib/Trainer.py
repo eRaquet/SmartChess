@@ -31,8 +31,8 @@ class Trainer ():
 
         self.currentNetwork = Network.Model(offset=networkOffset)
 
-        self.testPos = np.load(path + '\\testPositions\\testPositions.npy')
-        self.testEval = np.load(path + '\\testPositions\\testEvaluations.npy')
+        self.testPos = np.load(path + '/testPositions/testPositions.npy')
+        self.testEval = np.load(path + '/testPositions/testEvaluations.npy')
 
     #train an entire session
     def trainSession(self, epochs, gameNum, splitFraction = 0.5):
