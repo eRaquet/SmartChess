@@ -4,6 +4,7 @@ from keras import layers
 import sys
 import csv
 import time
+import json
 
 path = sys.path[0]
 path = path[0 : len(path) - 8]
@@ -73,7 +74,7 @@ class Model ():
 
         netConfig.close()
 
-        self.model.save(path + '/savedNetworks/model_' + str(netNum) + '.keras')
+        self.model.save_weights(path + '/savedNetworks/model_' + str(netNum) + '_weights.h5')
 
         with open(path + '/savedNetworks/config.csv', 'w') as netConfig:
 
@@ -103,12 +104,24 @@ class Model ():
 
             index = netNum - 1
 
-        self.model = keras.models.load_model(path + '/savedNetworks/model_' + str(index) + '.keras')
+        # Open model config file
+        with open(path + '/savedNetworks/model_format.json') as file:
+            format = json.load(file)
+
+        self.model = keras.models.model_from_json(format)
+
+        self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '_weights.h5')
 
     def loadModelIndex(self, index):
 
         try:
-            self.model = keras.models.load_model(path + '/savedNetworks/model_' + str(index) + '.keras')
+            # Open model config file
+            with open(path + '/savedNetworks/model_format.json') as file:
+                format = json.load(file)
+
+            self.model = keras.models.model_from_json(format)
+
+            self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '_weights.h5')
             return 1
         except:
             return 0
