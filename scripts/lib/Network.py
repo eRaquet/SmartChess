@@ -13,7 +13,9 @@ class Model ():
 
     #initiate a neural network with a certain shape
     def __init__(self, dim=None, offset=None, index=None):
-            
+
+        self.opt = keras.optimizers.Adam(learning_rate = 0.00001)
+
         if dim != None:
 
             '''
@@ -49,7 +51,6 @@ class Model ():
 
             #create model
             self.model = keras.Model(inputs=[self.boardLayer, self.paripheralLayer], outputs=self.outputLayer, name='boardEval')
-            self.opt = keras.optimizers.Adam(learning_rate = 0.00001)
             self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
 
 
@@ -111,6 +112,7 @@ class Model ():
         self.model = keras.models.model_from_json(format)
 
         self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '_weights.h5')
+        self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
 
     def loadModelIndex(self, index):
 
@@ -122,6 +124,7 @@ class Model ():
             self.model = keras.models.model_from_json(format)
 
             self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '_weights.h5')
+            self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
             return 1
         except:
             return 0
