@@ -4,4 +4,4 @@ import lib.Trainer as Trainer
 
 trainer = Trainer.Trainer()
 
-trainer.trainSession(25, 140)
+trainer.trainSession(15, 140)

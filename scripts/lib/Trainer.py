@@ -37,27 +37,27 @@ class Trainer ():
     #train an entire session
     def trainSession(self, epochs, gameNum, splitFraction = 0.5):
 
-        epochCount = 0
+        self.epochCount = 0
         self.broadGameCount = int(splitFraction * gameNum) #the number of games we play agianst all the bots together
         self.narrowGameCount = gameNum - self.broadGameCount #the number of games we play against the victor bots
 
         #train each epoch of games
-        while epochCount < epochs:
+        while self.epochCount < epochs:
 
             #count how many games we played that resulted in a victory
             self.games = 0
             
             self.trainEpoch()
 
-            epochCount += 1
+            self.epochCount += 1
 
             #if we are due to update the network
-            if epochCount % self.saveCount == 0:
+            if self.epochCount % self.saveCount == 0:
                 #save the current network
                 self.currentNetwork.saveModel()
 
         #if we haven't just saved a network
-        if epochCount % self.saveCount != 0:
+        if self.epochCount % self.saveCount != 0:
             #save the current network
             self.currentNetwork.saveModel()
 
@@ -225,7 +225,7 @@ class Trainer ():
 
         if sum(self.gamesPerBot) != 1:
             #clear lines
-            print("\033[F" * 6)
+            print("\033[F" * 7)
         else:
             print("-" * 60)
 
@@ -245,6 +245,9 @@ class Trainer ():
         #print total games
         print("Games against each bot: ", end='')
         print(list(self.gamesPerBot))
+
+        print("Completed epochs: ", end='')
+        print(self.epochCount)
 
         print("-" * 60)
 
