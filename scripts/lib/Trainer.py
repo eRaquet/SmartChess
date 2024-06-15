@@ -23,7 +23,7 @@ path = path[0 : len(path) - 8]
 
 class Trainer ():
 
-    def __init__(self, networkOffset=0, startConfidence=5.0, opponentNum=9, saveCount=5):
+    def __init__(self, networkOffset=0, startConfidence=7.0, opponentNum=9, saveCount=6):
 
         self.confidence = startConfidence
         self.opponentNum = opponentNum
