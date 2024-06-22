@@ -73,6 +73,10 @@ class Trainer ():
         #this is to be compared with self.gamesPerBot
         self.winsPerBot = np.zeros(self.opponentNum, int)
 
+        #an array that keeps track of how many completions the current model has mad against other models while playing white
+        #used to decide who plays what color during training
+        self.whiteCompletionsPerBot = np.zeros(self.opponentNum, int)
+
         #an array that keeps track of how many games have been completed against other models
         self.completionsPerBot = np.zeros(self.opponentNum, int)
 
@@ -162,30 +166,39 @@ class Trainer ():
                 loserEvaluations = self.currentNetwork.model.predict_on_batch([np.array(loserBoards), np.array(loserPeri)]).T[0]
 
                 #apply correction to the model
-                winnerOutput = np.clip(winnerEvaluations + rewardVal(len(winnerPeri)), -1.0, 1.0)
-                loserOutput = np.clip(loserEvaluations - rewardVal(len(loserPeri)), -1.0, 1.0)
+                winnerOutput = np.clip(winnerEvaluations + rewardVal(winnerEvaluations, True), -1.0, 1.0)
+                loserOutput = np.clip(loserEvaluations + rewardVal(loserEvaluations, False), -1.0, 1.0)
                 self.boardTrainData = np.concatenate((self.boardTrainData, winnerBoards, loserBoards), axis=0)
                 self.periTrainData = np.concatenate((self.periTrainData, winnerPeri, loserPeri), axis=0)
                 self.outputTrainData = np.concatenate((self.outputTrainData, winnerOutput, loserOutput), axis=0)
 
                 #check if the bot that one was the main bot
-                if (self.rand == winner):
+                if (self.colorSelect == winner):
                     #add one to the appropriate tally
                     self.winsPerBot[self.botOffset] += 1
+
+                #check if the main bot was white
+                if (self.colorSelect == chess.WHITE):
+                    #add one to the appropriate tally
+                    self.whiteCompletionsPerBot[self.botOffset] += 1
 
             self.moniterSchedule()
 
     #play a game to its end, and return the outcome
     def playGame(self):
 
-        #define a random value to determine which bot gets which color
-        self.rand = bool(round(random.random()))
+        if self.completionsPerBot[self.botOffset] != 0 and self.whiteCompletionsPerBot[self.botOffset] / float(self.completionsPerBot[self.botOffset]) < 0.5:
+            self.colorSelect = chess.WHITE
+        elif self.completionsPerBot[self.botOffset] != 0 and self.whiteCompletionsPerBot[self.botOffset] / float(self.completionsPerBot[self.botOffset]) > 0.5:
+            self.colorSelect = chess.BLACK
+        else:
+            self.colorSelect = bool(random.getrandbits(1))
 
-        #main bot gets white
-        if self.rand:
+        #train bot gets white
+        if self.colorSelect:
             whiteBot = self.currentNetwork
             blackBot = self.loadedBots[self.botOffset]
-        #main bot gets black
+        #train bot gets black
         else:
             whiteBot = self.loadedBots[self.botOffset]
             blackBot = self.currentNetwork
@@ -232,7 +245,7 @@ class Trainer ():
         remainingGames = sum(self.broadGameSchedule) + sum(self.narrowGameSchedule) - sum(self.completionsPerBot)
 
         #print remaining games
-        print("Games to play: " + str(remainingGames) + " | Games completed: " + str(sum(self.completionsPerBot)) + "   ")
+        print("Games to play: " + str(int(remainingGames)) + " | Games completed: " + str(int(sum(self.completionsPerBot))) + "   ")
 
         #print total wins
         print("Wins against each bot: ", end='')
@@ -268,18 +281,19 @@ def getGameDist(gameNum, opponentNum):
 #game distibution function --> used in getGameDist
 def gameDist(index, n):
 
-    #adjust index to function to a midpoint rectagular approximation
-    #index += 0.5
-    #return (-2 / n**2) * index + (2 / n)
-
     return 1 / n
 
 #reward function
-def rewardVal(length):
+def rewardVal(evals, winner):
 
     #a constant term and a dependant term
-    value = 0.2 - (0.2 / 60) * length
-    return max(value, 0.02)
+    value = 0.2 - (0.2 / 60) * len(evals)
+    nominal = max(value, 0.02)
+
+    if winner == True:
+        return nominal * (1 - (evals + 1) / 2)
+    else:
+        return -nominal * ((evals + 1) / 2)
 
 def victorDistrobution(gamesPlayed, gamesLost, gameNum):
 
