@@ -75,7 +75,7 @@ class Model ():
 
         netConfig.close()
 
-        self.model.save_weights(path + '/savedNetworks/model_' + str(netNum) + '_weights.h5')
+        self.model.save_weights(path + '/savedNetworks/model_' + str(netNum) + '.weights.h5')
 
         with open(path + '/savedNetworks/config.csv', 'w') as netConfig:
 
