@@ -111,7 +111,7 @@ class Model ():
 
         self.model = keras.models.model_from_json(format)
 
-        self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '_weights.h5')
+        self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '.weights.h5')
         self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
 
     def loadModelIndex(self, index):
@@ -123,7 +123,7 @@ class Model ():
 
             self.model = keras.models.model_from_json(format)
 
-            self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '_weights.h5')
+            self.model.load_weights(path + '/savedNetworks/model_' + str(index) + '.weights.h5')
             self.model.compile(optimizer=self.opt, loss='mean_absolute_error', run_eagerly=True)
             return 1
         except:
