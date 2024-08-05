@@ -36,7 +36,7 @@ class Model ():
 
             #create inputs
             self.boardLayer = keras.Input((8, 8, 12), dtype='float32')
-            self.paripheralLayer = keras.Input(5, dtype='float32')
+            self.paripheralLayer = keras.Input((5,), dtype='float32')
 
             #convolve the board input
             x = layers.Conv2D(dim[0], 3, activation='relu', data_format='channels_last')(self.boardLayer)
