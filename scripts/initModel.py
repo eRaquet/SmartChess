@@ -9,7 +9,7 @@ path = sys.path[0]
 path = path[0 : len(path) - 8]
 
 for i in range(0, 10):
-    model = Network.Model((80, 50, 30, 10))
+    model = Network.Model((100, 70, 40, 10))
     model.model.save_weights(path + '/savedNetworks/model_' + str(i) + '_weights.h5')
     if i == 0:
         with open(path + '/savedNetworks/model_format.json', 'w') as f:
