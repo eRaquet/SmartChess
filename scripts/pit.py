@@ -4,7 +4,6 @@ import lib.Network as Network
 import csv
 import sys
 import random
-from IPython.display import clear_output
 
 #get spects in a clash between two bots
 
@@ -54,7 +53,6 @@ while completionCount != gameNum:
         else:
             win2Count += 1
     
-    clear_output()
     #print output
     if gameCount != 1:
         #delete previous line
