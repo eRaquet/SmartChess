@@ -15,7 +15,7 @@ path = path[0 : len(path) - 8]
 class Game ():
 
     #initiation of a chess game
-    def __init__(self, players, startingFEN=chess.STARTING_FEN, display=True):
+    def __init__(self, players, data=[], labels=[], startingFEN=chess.STARTING_FEN, display=True):
 
         #players -> [black, white] such that players[chess.COLOR] is the corrisponding color
         self.players = players
@@ -31,7 +31,7 @@ class Game ():
         self.firstTurn = self.board.turn
 
         if display != False:
-            self.display = Display.Display()
+            self.display = Display.Display(data, labels)
 
         else:
             self.display = None
@@ -89,3 +89,7 @@ class Game ():
         
         else:
             return False
+        
+    def clearPlots(self):
+        if self.display != None:
+            self.display.clearPlots()

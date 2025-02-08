@@ -3,6 +3,7 @@ import pygame as pg
 import sys
 import time
 import csv
+from lib.Plot import Plot
 
 path = sys.path[0]
 
@@ -26,7 +27,7 @@ pieceImages = {
 
 class Display ():
 
-    def __init__(self):
+    def __init__(self, data, label):
 
         pg.init()
 
@@ -38,6 +39,12 @@ class Display ():
 
         self.selectedSquare = None
         self.highlightMask = []
+
+        if data != []:
+            self.plots = Plot(data, label)
+            self.plots.show()
+        else:
+            self.plots = None
 
         self.displayBoard(chess.Board())
 
@@ -127,6 +134,7 @@ class Display ():
                 self.surf.blit(pieceImages[piece.symbol()], pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
 
         pg.display.update()
+        self.plots.show()
 
     #check for human input
     def getHumanInput(self, board, boardMap=None):
@@ -227,4 +235,9 @@ class Display ():
         self.endDisplay()
     
     def endDisplay(self):
+
         pg.quit()
+    
+    def clearPlots(self):
+
+        self.plots.close()

@@ -57,6 +57,9 @@ class Bot ():
         self.network = network
         self.confidence = confidence
 
+        # for data logging
+        self.evalHistory = []
+
     def getMove(self, board, display, boardMap):
 
         self.board = board
@@ -183,7 +186,8 @@ class Bot ():
     def evaluate(self, boardPositions, peripherals):
 
         #evaluate positions
-        eval = self.network.model.predict_on_batch([boardPositions.astype(np.float64), peripherals.astype(np.float64)]).T[0]
+        evalOrig = self.network.model.predict_on_batch([boardPositions.astype(np.float64), peripherals.astype(np.float64)]).T[0]
+        eval = evalOrig.copy()
 
         #if playing on maximum confidence (no exploration)
         if self.confidence == float("inf"):
@@ -195,6 +199,7 @@ class Bot ():
 
             #get index of best evaluation
             index = list(eval).index(self.bestEval)
+            self.evalHistory.append(evalOrig[index])
             return index
         
         #if not playing on maximum confidence
@@ -213,8 +218,10 @@ class Bot ():
                 eval = eval**self.confidence
                 eval /= sum(eval)
                 index = np.random.choice(range(0, len(self.legalMoves)), p=eval)
+                self.evalHistory.append(evalOrig[index])
                 return index
             else:
+                self.evalHistory.append(evalOrig[0])
                 return 0
     
     #create a bit board from the current board position

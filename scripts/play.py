@@ -30,6 +30,9 @@ while True:
     white = config[0]
     black = config[1]
 
+    dataList = []
+    labelList = []
+
     #if the player types are valid
     if white[0] in playerTypes and black[0] in playerTypes:
 
@@ -40,12 +43,20 @@ while True:
             whitePlayer = Players.Bot(1, model, confidence=5.0)
         
         if black[0] != 'b' or len(black) == 1:
-            whitePlayer = playerDic[(black, 'w')]
+            blackPlayer = playerDic[(black, 'b')]
         else:
             model = Network.Model(index=int(black[1:]))
             blackPlayer = Players.Bot(0, model, confidence=5.0)
+    
+        if white[0] == 'b':
+            dataList.append(whitePlayer.evalHistory)
+            labelList.append("White Eval")
 
-        game = Game.Game([blackPlayer, whitePlayer])
+        if black[0] == 'b':
+            dataList.append(blackPlayer.evalHistory)
+            labelList.append("Black Eval")
+
+        game = Game.Game([blackPlayer, whitePlayer], data=dataList, labels=labelList)
 
         while not game.isEnd():
 
@@ -63,14 +74,13 @@ while True:
 
                     if event.type == pg.MOUSEBUTTONDOWN:
 
-                        t = time.time()
                         game.makeMove()
-                        print("move time: " + str(time.time() - t))
 
         print("Do you want to play again? (y/n) ", end='')
 
         if input() != 'y':
             break
+        game.clearPlots()
 
     #invalid player types
     else:
