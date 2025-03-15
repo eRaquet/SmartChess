@@ -165,8 +165,8 @@ class Trainer ():
                 loserEvaluations = self.currentNetwork.model.predict_on_batch([np.array(loserBoards), np.array(loserPeri)]).T[0]
 
                 #apply correction to the model
-                winnerOutput = np.clip(winnerEvaluations + rewardVal(winnerEvaluations, True), -1.0, 1.0)
-                loserOutput = np.clip(loserEvaluations + rewardVal(loserEvaluations, False), -1.0, 1.0)
+                winnerOutput = np.clip(reinforcedEval(winnerEvaluations, True), -1.0, 1.0)
+                loserOutput = np.clip(reinforcedEval(loserEvaluations, False), -1.0, 1.0)
                 self.boardTrainData = np.concatenate((self.boardTrainData, winnerBoards, loserBoards), axis=0)
                 self.periTrainData = np.concatenate((self.periTrainData, winnerPeri, loserPeri), axis=0)
                 self.outputTrainData = np.concatenate((self.outputTrainData, winnerOutput, loserOutput), axis=0)
@@ -282,16 +282,37 @@ def gameDist(index, n):
     return 1 / n
 
 #reward function
-def rewardVal(evals, winner):
+def reinforcedEval(evals, winner):
 
     #a constant term and a dependant term
     value = 0.2 - (0.2 / 60) * len(evals)
     nominal = max(value, 0.02)
 
+    # apply adjustments based on win/lose status
     if winner == True:
-        return nominal * (1 - (evals + 1) / 2)
+        evals = evals + nominal * (1 - (evals + 1) / 2)
     else:
-        return -nominal * ((evals + 1) / 2)
+        evals = evals + -nominal * ((evals + 1) / 2)
+
+    # Determine where the eval at a specific move is greater than the
+    # move after it.  In such a case, it is perhaps adventagous to 
+    # manually adjust the evaluation to match that of the move after
+    # to maintain search depth consistency.
+    #
+    # The goal is that the bot will be encouraged to evaluate more
+    # consistently into the future of the game, futher pressuring the
+    # evaluation to reflect the true status of the game.
+    #
+    # In an optimal performance, my game evaluation should only ever go up.
+    # If it goes down, it means that there was an optimal response by the
+    # opponent that the bot hadn't seen, and the position truly is not as
+    # good as it at first thought.
+    evalDropMask = np.less(evals[1:], evals[:-1])
+
+    # overhaul evals based on the eval drop mask
+    evals[:-1] = np.where(evalDropMask, evals[1:], evals[:-1])
+
+    return evals
 
 def victorDistrobution(gamesPlayed, gamesLost, gameNum):
 
