@@ -4,4 +4,7 @@ import lib.Trainer as Trainer
 
 trainer = Trainer.Trainer()
 
-trainer.trainSession(100, 140)
+# meant to be terminated by keyboard interrupt
+while True:
+    # train one model iteration
+    trainer.trainSession(5, 140)
