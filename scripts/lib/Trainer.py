@@ -101,9 +101,6 @@ class Trainer ():
             #play all the games against one bot
             self.playBot(self.broadGameSchedule[self.botOffset])
 
-            #save game for loging purposes
-            self.game.saveGame()
-
             self.botOffset += 1
 
         self.narrowGameSchedule = victorDistrobution(self.completionsPerBot, (self.completionsPerBot - self.winsPerBot), self.narrowGameCount)
@@ -114,9 +111,6 @@ class Trainer ():
 
             #play all the games against one bot
             self.playBot(self.narrowGameSchedule[self.botOffset])
-
-            #save game for loging purposes
-            self.game.saveGame()
 
             self.botOffset += 1
 
@@ -288,12 +282,6 @@ def reinforcedEval(evals, winner):
     value = 0.2 - (0.2 / 60) * len(evals)
     nominal = max(value, 0.02)
 
-    # apply adjustments based on win/lose status
-    if winner == True:
-        evals = evals + nominal * (1 - (evals + 1) / 2)
-    else:
-        evals = evals + -nominal * ((evals + 1) / 2)
-
     # Determine where the eval at a specific move is greater than the
     # move after it.  In such a case, it is perhaps adventagous to 
     # manually adjust the evaluation to match that of the move after
@@ -309,8 +297,18 @@ def reinforcedEval(evals, winner):
     # good as it at first thought.
     evalDropMask = np.less(evals[1:], evals[:-1])
 
+    # find sum of total adjustment across all positions
+    adjustmentSum = np.sum(np.where(evalDropMask, evals[:-1] - evals[1:], 0))
+
     # overhaul evals based on the eval drop mask
     evals[:-1] = np.where(evalDropMask, evals[1:], evals[:-1])
+    evals += adjustmentSum / len(evals)
+
+    # apply adjustments based on win/lose status
+    if winner == True:
+        evals = evals + nominal * (1 - (evals + 1) / 2)
+    else:
+        evals = evals + -nominal * ((evals + 1) / 2)
 
     return evals
 
