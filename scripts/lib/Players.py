@@ -205,17 +205,16 @@ class Bot ():
         #if not playing on maximum confidence
         else:
             
-            if sum((eval - np.ones(len(eval)) * eval.mean()) != np.zeros(len(eval))):
-                #create a normalized distrubtion of moves
-                #raised to the power of our confidence level.
-                #this will allow good moves to rise to the top of the distrobution
-                #while still allowing exploration to occur.
-                #the goal is to have better exploration of the model's entire state-space
+            #create a normalized distrubtion of moves
+            #raised to the power of our confidence level.
+            #this will allow good moves to rise to the top of the distrobution
+            #while still allowing exploration to occur.
+            #the goal is to have better exploration of the model's entire state-space
 
-                #step by step construction of distribution
-                eval -= min(eval)
-                eval /= sum(eval)
-                eval = eval**self.confidence
+            #step by step construction of distribution
+            eval -= min(eval)
+            eval = eval**self.confidence
+            if sum(eval) != 0:
                 eval /= sum(eval)
                 index = np.random.choice(range(0, len(self.legalMoves)), p=eval)
                 self.evalHistory.append(evalOrig[index])
