@@ -33,6 +33,10 @@ class Trainer ():
         self.testPos = np.load(path + '/testPositions/testPositions.npy')
         self.testEval = np.load(path + '/testPositions/testEvaluations.npy')
 
+        # training parameters
+        self.nominalWinGain = 0.1
+        self.blunderCatcherGain = 0.2
+
     #train an entire session
     def trainSession(self, epochs, gameNum, splitFraction = 0.5):
 
@@ -159,8 +163,8 @@ class Trainer ():
                 loserEvaluations = self.currentNetwork.model.predict_on_batch([np.array(loserBoards), np.array(loserPeri)]).T[0]
 
                 #apply correction to the model
-                winnerOutput = np.clip(reinforcedEval(winnerEvaluations, True), -1.0, 1.0)
-                loserOutput = np.clip(reinforcedEval(loserEvaluations, False), -1.0, 1.0)
+                winnerOutput = np.clip(reinforcedEval(winnerEvaluations, True, self.nominalWinGain, self.blunderCatcherGain), -1.0, 1.0)
+                loserOutput = np.clip(reinforcedEval(loserEvaluations, False, self.nominalWinGain, self.blunderCatcherGain), -1.0, 1.0)
                 self.boardTrainData = np.concatenate((self.boardTrainData, winnerBoards, loserBoards), axis=0)
                 self.periTrainData = np.concatenate((self.periTrainData, winnerPeri, loserPeri), axis=0)
                 self.outputTrainData = np.concatenate((self.outputTrainData, winnerOutput, loserOutput), axis=0)
@@ -237,7 +241,10 @@ class Trainer ():
         remainingGames = sum(self.broadGameSchedule) + sum(self.narrowGameSchedule) - sum(self.completionsPerBot)
 
         #print remaining games
-        print("Games to play: " + str(int(remainingGames)) + " | Games completed: " + str(int(sum(self.completionsPerBot))) + "   ")
+        if sum(self.completionsPerBot) != 0:
+            print("Games to play: " + str(int(remainingGames)) + " | Games completed: " + str(int(sum(self.completionsPerBot))) + " | Win ratio: " + str(int(sum(self.winsPerBot) / sum(self.completionsPerBot) * 100)) + " %   ")
+        else:
+            print("Games to play: " + str(int(remainingGames)) + " | Games completed: " + str(int(sum(self.completionsPerBot))) + " | Win ratio: 0 %   ")
 
         #print total wins
         print("Wins against each bot: ", end='')
@@ -276,11 +283,7 @@ def gameDist(index, n):
     return 1 / n
 
 #reward function
-def reinforcedEval(evals, winner):
-
-    #a constant term and a dependant term
-    value = 0.2 - (0.2 / 60) * len(evals)
-    nominal = max(value, 0.02)
+def reinforcedEval(evals, winner, nominal, blunderCatcherGain):
 
     # Determine where the eval at a specific move is greater than the
     # move after it.  In such a case, it is perhaps adventagous to 
@@ -298,10 +301,10 @@ def reinforcedEval(evals, winner):
     evalDropMask = np.less(evals[1:], evals[:-1])
 
     # find sum of total adjustment across all positions
-    adjustmentSum = np.sum(np.where(evalDropMask, evals[:-1] - evals[1:], 0))
+    adjustmentSum = np.sum(np.where(evalDropMask, blunderCatcherGain * (evals[:-1] - evals[1:]), 0))
 
     # overhaul evals based on the eval drop mask
-    evals[:-1] = np.where(evalDropMask, evals[1:], evals[:-1])
+    evals[:-1] += np.where(evalDropMask, blunderCatcherGain * (evals[1:] - evals[:-1]), 0)
     evals += adjustmentSum / len(evals)
 
     # apply adjustments based on win/lose status
