@@ -50,7 +50,7 @@ class Model ():
             #combine the board convolution and the paripheral inputs
             self.outputLayer = layers.concatenate([self.boardOutputLayer, self.paripheralLayer])
             self.outputLayer = layers.Dense(dim[3], activation='relu')(self.outputLayer)
-            self.outputLayer = layers.Dense(1, activation='tanh')(self.outputLayer)
+            self.outputLayer = layers.Dense(1, activation='linear')(self.outputLayer)
 
             #create model
             self.model = keras.Model(inputs=[self.boardLayer, self.paripheralLayer], outputs=self.outputLayer, name='boardEval')
