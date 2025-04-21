@@ -27,7 +27,7 @@ pieceImages = {
 
 class Display ():
 
-    def __init__(self, data, label):
+    def __init__(self, data=[], label=[]):
 
         pg.init()
 
@@ -71,7 +71,7 @@ class Display ():
                 pieceColor = (piece < 6) #mine or yours?
 
                 #check to see if the piece is on the bit board (and prune this square from our search)
-                if bitBoard[128 * pieceType + 64 - int(pieceColor) * 64 + square] == True:
+                if bitBoard[chess.square_file(square)][chess.square_rank(square)][pieceType + pieceColor * 6] == True:
 
 
                     self.surf.blit(pieceImages[chess.Piece(pieceType + 1, pieceColor).symbol()], pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
@@ -134,7 +134,8 @@ class Display ():
                 self.surf.blit(pieceImages[piece.symbol()], pg.Rect(20 + 60 * column, 20 + 60 * row, 60, 60))
 
         pg.display.update()
-        self.plots.show()
+        if self.plots != None:
+            self.plots.show()
 
     #check for human input
     def getHumanInput(self, board, boardMap=None):

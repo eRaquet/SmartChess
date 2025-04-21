@@ -86,7 +86,7 @@ class Bot ():
                             self.board.castling_rights & chess.BB_A1,
                             self.board.castling_rights & chess.BB_A8,
                             self.board.castling_rights & chess.BB_H8,
-                            self.board.castling_rights & chess.BB_H1])
+                            self.board.castling_rights & chess.BB_H1], np.bool_)
             if len(self.positions) != 0:
                 per[0] = (np.count_nonzero(np.all(self.positions == bitBoard, axis=(1, 2, 3))) > 1)
 
