@@ -34,8 +34,8 @@ class Trainer ():
         self.testEval = np.load(path + '/testPositions/testEvaluations.npy')
 
         # training parameters
-        self.nominalWinGain = 0.1
-        self.blunderCatcherGain = 0.2
+        self.nominalWinGain = 0.05
+        self.blunderCatcherGain = 0.1
 
     #train an entire session
     def trainSession(self, epochs, gameNum, splitFraction = 0.5):

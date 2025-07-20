@@ -7,4 +7,4 @@ trainer = Trainer.Trainer()
 # meant to be terminated by keyboard interrupt
 while True:
     # train one model iteration
-    trainer.trainSession(5, 140)
+    trainer.trainSession(5, 240)
